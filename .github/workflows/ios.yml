@@ -1,0 +1,119 @@
+name: iOS CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Test
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
+        
+    - name: Cache Swift Package Manager
+      uses: actions/cache@v3
+      with:
+        path: .build
+        key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+        restore-keys: |
+          ${{ runner.os }}-spm-
+          
+    - name: Install Dependencies
+      run: |
+        cd mindbuddy
+        xcodebuild -resolvePackageDependencies -scheme mindbuddy
+        
+    - name: Build for Testing
+      run: |
+        cd mindbuddy
+        xcodebuild build-for-testing \
+          -scheme mindbuddy \
+          -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
+          -derivedDataPath DerivedData
+          
+    - name: Run Unit Tests
+      run: |
+        cd mindbuddy
+        xcodebuild test-without-building \
+          -scheme mindbuddy \
+          -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
+          -derivedDataPath DerivedData \
+          -resultBundlePath TestResults
+          
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v3
+      if: failure()
+      with:
+        name: test-results
+        path: mindbuddy/TestResults
+        
+  lint:
+    name: SwiftLint
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: Install SwiftLint
+      run: brew install swiftlint
+      
+    - name: Run SwiftLint
+      run: |
+        cd mindbuddy
+        swiftlint lint --reporter github-actions-logging
+        
+  security-scan:
+    name: Security Scan
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: Scan for Secrets
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+        
+  build:
+    name: Build Release
+    runs-on: macos-latest
+    needs: [test, lint]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
+        
+    - name: Build for Release
+      run: |
+        cd mindbuddy
+        xcodebuild archive \
+          -scheme mindbuddy \
+          -configuration Release \
+          -destination 'generic/platform=iOS' \
+          -archivePath 'MindBuddy.xcarchive'
+          
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: mindbuddy-archive
+        path: mindbuddy/MindBuddy.xcarchive

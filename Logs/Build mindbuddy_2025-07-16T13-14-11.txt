@@ -1,0 +1,111 @@
+
+Showing All Issues
+
+Build target mindbuddy of project mindbuddy with configuration Debug
+
+SwiftCompile normal arm64 Compiling\ MockAuthService.swift /Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift (in target 'mindbuddy' from project 'mindbuddy')
+
+Failed frontend command:
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -frontend -c /Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Features/Authentication/RegisterView.swift /Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Features/Dashboard/DashboardView.swift -primary-file /Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift /Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Features/Health/HealthView.swift /Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/mindbuddyApp.swift /Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Core/Auth/AuthManager.swift /Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/ContentView.swift /Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Core/Models/HealthData.swift /Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Core/Rewards/RewardsManager.swift /Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Features/Rewards/RewardsView.swift /Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Features/Settings/SettingsView.swift /Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Features/MainTabView.swift /Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Core/Models/User.swift /Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Core/Network/APIClient.swift /Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Features/Authentication/LoginView.swift /Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Core/Models/Rewards.swift /Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Core/Health/HealthManager.swift /Users/emersonferreira/Library/Developer/Xcode/DerivedData/mindbuddy-cpcekkdabbulxwebetpmgistcnbj/Build/Intermediates.noindex/mindbuddy.build/Debug-iphonesimulator/mindbuddy.build/DerivedSources/GeneratedAssetSymbols.swift -emit-dependencies-path /Users/emersonferreira/Library/Developer/Xcode/DerivedData/mindbuddy-cpcekkdabbulxwebetpmgistcnbj/Build/Intermediates.noindex/mindbuddy.build/Debug-iphonesimulator/mindbuddy.build/Objects-normal/arm64/MockAuthService.d -emit-const-values-path /Users/emersonferreira/Library/Developer/Xcode/DerivedData/mindbuddy-cpcekkdabbulxwebetpmgistcnbj/Build/Intermediates.noindex/mindbuddy.build/Debug-iphonesimulator/mindbuddy.build/Objects-normal/arm64/MockAuthService.swiftconstvalues -emit-reference-dependencies-path /Users/emersonferreira/Library/Developer/Xcode/DerivedData/mindbuddy-cpcekkdabbulxwebetpmgistcnbj/Build/Intermediates.noindex/mindbuddy.build/Debug-iphonesimulator/mindbuddy.build/Objects-normal/arm64/MockAuthService.swiftdeps -serialize-diagnostics-path /Users/emersonferreira/Library/Developer/Xcode/DerivedData/mindbuddy-cpcekkdabbulxwebetpmgistcnbj/Build/Intermediates.noindex/mindbuddy.build/Debug-iphonesimulator/mindbuddy.build/Objects-normal/arm64/MockAuthService.dia -emit-localized-strings -emit-localized-strings-path /Users/emersonferreira/Library/Developer/Xcode/DerivedData/mindbuddy-cpcekkdabbulxwebetpmgistcnbj/Build/Intermediates.noindex/mindbuddy.build/Debug-iphonesimulator/mindbuddy.build/Objects-normal/arm64 -target arm64-apple-ios18.5-simulator -Xllvm -aarch64-use-tbi -enable-objc-interop -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -I /Users/emersonferreira/Library/Developer/Xcode/DerivedData/mindbuddy-cpcekkdabbulxwebetpmgistcnbj/Build/Products/Debug-iphonesimulator -F /Users/emersonferreira/Library/Developer/Xcode/DerivedData/mindbuddy-cpcekkdabbulxwebetpmgistcnbj/Build/Products/Debug-iphonesimulator -no-color-diagnostics -enable-testing -g -debug-info-format\=dwarf -dwarf-version\=5 -module-cache-path /Users/emersonferreira/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -profile-generate -profile-coverage-mapping -swift-version 5 -enforce-exclusivity\=checked -Onone -D DEBUG -serialize-debugging-options -const-gather-protocols-file /Users/emersonferreira/Library/Developer/Xcode/DerivedData/mindbuddy-cpcekkdabbulxwebetpmgistcnbj/Build/Intermediates.noindex/mindbuddy.build/Debug-iphonesimulator/mindbuddy.build/Objects-normal/arm64/mindbuddy_const_extract_protocols.json -enable-experimental-feature DebugDescriptionMacro -enable-bare-slash-regex -empty-abi-descriptor -validate-clang-modules-once -clang-build-session-file /Users/emersonferreira/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -working-directory -Xcc /Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift -enable-anonymous-context-mangled-names -file-compilation-dir /Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy -Xcc -ivfsstatcache -Xcc /Users/emersonferreira/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator18.5-22F76-d5fc8ad4295d2ef488fb7d0f804ce0c4.sdkstatcache -Xcc -I/Users/emersonferreira/Library/Developer/Xcode/DerivedData/mindbuddy-cpcekkdabbulxwebetpmgistcnbj/Build/Intermediates.noindex/mindbuddy.build/Debug-iphonesimulator/mindbuddy.build/swift-overrides.hmap -Xcc -iquote -Xcc /Users/emersonferreira/Library/Developer/Xcode/DerivedData/mindbuddy-cpcekkdabbulxwebetpmgistcnbj/Build/Intermediates.noindex/mindbuddy.build/Debug-iphonesimulator/mindbuddy.build/mindbuddy-generated-files.hmap -Xcc -I/Users/emersonferreira/Library/Developer/Xcode/DerivedData/mindbuddy-cpcekkdabbulxwebetpmgistcnbj/Build/Intermediates.noindex/mindbuddy.build/Debug-iphonesimulator/mindbuddy.build/mindbuddy-own-target-headers.hmap -Xcc -I/Users/emersonferreira/Library/Developer/Xcode/DerivedData/mindbuddy-cpcekkdabbulxwebetpmgistcnbj/Build/Intermediates.noindex/mindbuddy.build/Debug-iphonesimulator/mindbuddy.build/mindbuddy-all-target-headers.hmap -Xcc -iquote -Xcc /Users/emersonferreira/Library/Developer/Xcode/DerivedData/mindbuddy-cpcekkdabbulxwebetpmgistcnbj/Build/Intermediates.noindex/mindbuddy.build/Debug-iphonesimulator/mindbuddy.build/mindbuddy-project-headers.hmap -Xcc -I/Users/emersonferreira/Library/Developer/Xcode/DerivedData/mindbuddy-cpcekkdabbulxwebetpmgistcnbj/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/emersonferreira/Library/Developer/Xcode/DerivedData/mindbuddy-cpcekkdabbulxwebetpmgistcnbj/Build/Intermediates.noindex/mindbuddy.build/Debug-iphonesimulator/mindbuddy.build/DerivedSources-normal/arm64 -Xcc -I/Users/emersonferreira/Library/Developer/Xcode/DerivedData/mindbuddy-cpcekkdabbulxwebetpmgistcnbj/Build/Intermediates.noindex/mindbuddy.build/Debug-iphonesimulator/mindbuddy.build/DerivedSources/arm64 -Xcc -I/Users/emersonferreira/Library/Developer/Xcode/DerivedData/mindbuddy-cpcekkdabbulxwebetpmgistcnbj/Build/Intermediates.noindex/mindbuddy.build/Debug-iphonesimulator/mindbuddy.build/DerivedSources -Xcc -DDEBUG\=1 -module-name mindbuddy -frontend-parseable-output -disable-clang-spi -target-sdk-version 18.5 -target-sdk-name iphonesimulator18.5 -external-plugin-path /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/swift/host/plugins\#/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server -external-plugin-path /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/local/lib/swift/host/plugins\#/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server -in-process-plugin-server-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/libSwiftInProcPluginServer.dylib -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/lib/swift/host/plugins -o /Users/emersonferreira/Library/Developer/Xcode/DerivedData/mindbuddy-cpcekkdabbulxwebetpmgistcnbj/Build/Intermediates.noindex/mindbuddy.build/Debug-iphonesimulator/mindbuddy.build/Objects-normal/arm64/MockAuthService.o -index-unit-output-path /mindbuddy.build/Debug-iphonesimulator/mindbuddy.build/Objects-normal/arm64/MockAuthService.o -index-store-path /Users/emersonferreira/Library/Developer/Xcode/DerivedData/mindbuddy-cpcekkdabbulxwebetpmgistcnbj/Index.noindex/DataStore -index-system-modules
+
+SwiftCompile normal arm64 /Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift (in target 'mindbuddy' from project 'mindbuddy')
+    cd /Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy
+    
+
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:3:24: error: cannot find type 'AuthServiceProtocol' in scope
+class MockAuthService: AuthServiceProtocol {
+                       ^~~~~~~~~~~~~~~~~~~
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:17:24: error: extra argument 'updatedAt' in call
+            updatedAt: Date()
+~~~~~~~~~~~~~~~~~~~~~~~^~~~~~
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:13:31: error: missing argument for parameter 'walletAddress' in call
+            lastName: lastName,
+                              ^
+                              , walletAddress: <#String?#>
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Core/Models/User.swift:3:8: note: 'init(id:email:firstName:lastName:walletAddress:tokenBalance:isVerified:createdAt:)' declared here
+struct User: Codable, Identifiable {
+       ^
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:16:24: error: cannot convert value of type 'Date' to expected argument type 'String'
+            createdAt: Date(),
+                       ^
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:15:27: error: cannot convert value of type 'Int' to expected argument type 'String'
+            tokenBalance: 0,
+                          ^
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:25:9: error: cannot find 'KeychainManager' in scope
+        KeychainManager.shared.save(accessToken, for: .accessToken)
+        ^~~~~~~~~~~~~~~
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:25:56: error: cannot infer contextual base in reference to member 'accessToken'
+        KeychainManager.shared.save(accessToken, for: .accessToken)
+                                                      ~^~~~~~~~~~~
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:26:9: error: cannot find 'KeychainManager' in scope
+        KeychainManager.shared.save(refreshToken, for: .refreshToken)
+        ^~~~~~~~~~~~~~~
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:26:57: error: cannot infer contextual base in reference to member 'refreshToken'
+        KeychainManager.shared.save(refreshToken, for: .refreshToken)
+                                                       ~^~~~~~~~~~~~
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:53:24: error: extra argument 'updatedAt' in call
+            updatedAt: Date()
+~~~~~~~~~~~~~~~~~~~~~~~^~~~~~
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:49:29: error: missing argument for parameter 'walletAddress' in call
+            lastName: "User",
+                            ^
+                            , walletAddress: <#String?#>
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Core/Models/User.swift:3:8: note: 'init(id:email:firstName:lastName:walletAddress:tokenBalance:isVerified:createdAt:)' declared here
+struct User: Codable, Identifiable {
+       ^
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:52:24: error: cannot convert value of type 'Date' to expected argument type 'String'
+            createdAt: Date(),
+                       ^
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:51:27: error: cannot convert value of type 'Int' to expected argument type 'String'
+            tokenBalance: 150,
+                          ^
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:61:9: error: cannot find 'KeychainManager' in scope
+        KeychainManager.shared.save(accessToken, for: .accessToken)
+        ^~~~~~~~~~~~~~~
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:61:56: error: cannot infer contextual base in reference to member 'accessToken'
+        KeychainManager.shared.save(accessToken, for: .accessToken)
+                                                      ~^~~~~~~~~~~
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:62:9: error: cannot find 'KeychainManager' in scope
+        KeychainManager.shared.save(refreshToken, for: .refreshToken)
+        ^~~~~~~~~~~~~~~
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:62:57: error: cannot infer contextual base in reference to member 'refreshToken'
+        KeychainManager.shared.save(refreshToken, for: .refreshToken)
+                                                       ~^~~~~~~~~~~~
+
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:3:24: Cannot find type 'AuthServiceProtocol' in scope
+
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:17:24: Extra argument 'updatedAt' in call
+
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:13:31: Missing argument for parameter 'walletAddress' in call
+
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:16:24: Cannot convert value of type 'Date' to expected argument type 'String'
+
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:15:27: Cannot convert value of type 'Int' to expected argument type 'String'
+
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:25:9: Cannot find 'KeychainManager' in scope
+
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:25:56: Cannot infer contextual base in reference to member 'accessToken'
+
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:26:9: Cannot find 'KeychainManager' in scope
+
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:26:57: Cannot infer contextual base in reference to member 'refreshToken'
+
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:53:24: Extra argument 'updatedAt' in call
+
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:49:29: Missing argument for parameter 'walletAddress' in call
+
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:52:24: Cannot convert value of type 'Date' to expected argument type 'String'
+
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:51:27: Cannot convert value of type 'Int' to expected argument type 'String'
+
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:61:9: Cannot find 'KeychainManager' in scope
+
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:61:56: Cannot infer contextual base in reference to member 'accessToken'
+
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:62:9: Cannot find 'KeychainManager' in scope
+
+/Users/emersonferreira/DEV/mindbuddy/mindbuddy-ios/mindbuddy/mindbuddy/Services/MockAuthService.swift:62:57: Cannot infer contextual base in reference to member 'refreshToken'
+
+
+
+Build failed    16/07/2025, 13:14    0.3 seconds
