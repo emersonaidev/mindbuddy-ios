@@ -1,8 +1,12 @@
 import SwiftUI
 
 struct RegisterView: View {
-    @StateObject private var authManager = AuthManager.shared
+    @StateObject private var authManager: AuthManager
     @Environment(\.dismiss) private var dismiss
+    
+    init(authManager: AuthManager = DependencyContainer.shared.authService as! AuthManager) {
+        self._authManager = StateObject(wrappedValue: authManager)
+    }
     
     @State private var email = ""
     @State private var password = ""
@@ -153,21 +157,15 @@ struct RegisterView: View {
     }
     
     private var isFormValid: Bool {
-        !firstName.isEmpty &&
-        !lastName.isEmpty &&
-        !email.isEmpty &&
-        password.count >= 8 &&
-        password == confirmPassword &&
-        isPasswordValid
+        ValidationUtilities.validateName(firstName, fieldName: "First name").isValid &&
+        ValidationUtilities.validateName(lastName, fieldName: "Last name").isValid &&
+        ValidationUtilities.validateEmail(email).isValid &&
+        ValidationUtilities.validatePassword(password).isValid &&
+        password == confirmPassword
     }
     
-    private var isPasswordValid: Bool {
-        let specialChars = CharacterSet(charactersIn: "!@#$%^&*(),.?\":{}|<>")
-        return password.count >= 8 &&
-               password.rangeOfCharacter(from: .uppercaseLetters) != nil &&
-               password.rangeOfCharacter(from: .lowercaseLetters) != nil &&
-               password.rangeOfCharacter(from: .decimalDigits) != nil &&
-               password.rangeOfCharacter(from: specialChars) != nil
+    private var passwordStrength: PasswordStrength {
+        ValidationUtilities.passwordStrength(password)
     }
     
     private func register() {

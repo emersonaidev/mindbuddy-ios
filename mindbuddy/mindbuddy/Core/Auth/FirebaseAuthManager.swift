@@ -5,7 +5,7 @@ import GoogleSignIn
 import AuthenticationServices
 import CryptoKit
 
-class FirebaseAuthManager: NSObject, ObservableObject {
+class FirebaseAuthManager: NSObject, ObservableObject, FirebaseAuthManagerProtocol {
     static let shared = FirebaseAuthManager()
     
     var currentNonce: String?

@@ -126,11 +126,11 @@ struct RecentRewardsSection: View {
                 .font(.headline)
                 .padding(.horizontal)
             
-            if rewardsManager.recentRewards.isEmpty {
+            if rewardsManager.recentRewardsList.isEmpty {
                 EmptyRewardsView()
             } else {
                 LazyVStack(spacing: 12) {
-                    ForEach(rewardsManager.recentRewards) { reward in
+                    ForEach(rewardsManager.recentRewardsList) { reward in
                         RewardRow(reward: reward)
                     }
                 }

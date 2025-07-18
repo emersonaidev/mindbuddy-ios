@@ -1,22 +1,43 @@
 import Foundation
 
-class APIClient {
+class APIClient: APIClientProtocol {
     static let shared = APIClient()
     
     private let baseURL = "https://mindbuddy-api.onrender.com/api/v1"
     private let session = URLSession.shared
-    private let keychainService = KeychainService.shared
+    private let keychainService: KeychainServiceProtocol
     
-    private init() {}
+    init(keychainService: KeychainServiceProtocol = KeychainService.shared) {
+        self.keychainService = keychainService
+    }
     
-    func request<T: Codable>(
+    func request<T: Decodable>(
         endpoint: String,
-        method: HTTPMethod = .GET,
-        body: Data? = nil,
-        headers: [String: String] = [:],
+        method: HTTPMethod,
+        body: Data?,
+        headers: [String: String],
         responseType: T.Type,
-        requiresAuth: Bool = true,
-        isRetry: Bool = false
+        requiresAuth: Bool
+    ) async throws -> T {
+        return try await requestInternal(
+            endpoint: endpoint,
+            method: method,
+            body: body,
+            headers: headers,
+            responseType: responseType,
+            requiresAuth: requiresAuth,
+            isRetry: false
+        )
+    }
+    
+    private func requestInternal<T: Decodable>(
+        endpoint: String,
+        method: HTTPMethod,
+        body: Data?,
+        headers: [String: String],
+        responseType: T.Type,
+        requiresAuth: Bool,
+        isRetry: Bool
     ) async throws -> T {
         guard let url = URL(string: baseURL + endpoint) else {
             throw APIError.invalidURL
@@ -72,7 +93,7 @@ class APIClient {
                     do {
                         try await refreshTokenAndRetry()
                         // Retry the request with new token
-                        return try await self.request(endpoint: endpoint, method: method, body: body, headers: headers, responseType: responseType, requiresAuth: requiresAuth, isRetry: true)
+                        return try await self.requestInternal(endpoint: endpoint, method: method, body: body, headers: headers, responseType: responseType, requiresAuth: requiresAuth, isRetry: true)
                     } catch {
                         throw APIError.unauthorized
                     }
@@ -136,6 +157,7 @@ class APIClient {
             endpoint: "/auth/refresh",
             method: .POST,
             body: requestData,
+            headers: [:],
             responseType: RefreshTokenResponse.self,
             requiresAuth: false
         )

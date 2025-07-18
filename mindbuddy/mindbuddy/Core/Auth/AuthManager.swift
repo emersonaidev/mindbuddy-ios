@@ -2,16 +2,27 @@ import Foundation
 import Security
 import FirebaseAuth
 
-class AuthManager: ObservableObject {
+class AuthManager: ObservableObject, AuthenticationServiceProtocol {
     static let shared = AuthManager()
     
     @Published var isAuthenticated = false
     @Published var currentUser: User?
     
-    private let keychainService = KeychainService.shared
-    private let firebaseAuthManager = FirebaseAuthManager.shared
+    private let keychainService: KeychainServiceProtocol
+    private let firebaseAuthManager: FirebaseAuthManagerProtocol
+    private let apiClient: APIClientProtocol
+    private let cacheService: CacheServiceProtocol
     
-    private init() {
+    init(
+        keychainService: KeychainServiceProtocol = DependencyContainer.shared.keychainService,
+        firebaseAuthManager: FirebaseAuthManagerProtocol = DependencyContainer.shared.firebaseAuthManager,
+        apiClient: APIClientProtocol = DependencyContainer.shared.apiClient,
+        cacheService: CacheServiceProtocol = DependencyContainer.shared.cacheService
+    ) {
+        self.keychainService = keychainService
+        self.firebaseAuthManager = firebaseAuthManager
+        self.apiClient = apiClient
+        self.cacheService = cacheService
         checkAuthStatus()
     }
     
@@ -122,10 +133,11 @@ class AuthManager: ObservableObject {
         let requestData = try JSONEncoder().encode(firebaseRequest)
         
         do {
-            let response: FirebaseAuthResponse = try await APIClient.shared.request(
+            let response: FirebaseAuthResponse = try await apiClient.request(
                 endpoint: "/auth/firebase/verify",
                 method: .POST,
                 body: requestData,
+                headers: [:],
                 responseType: FirebaseAuthResponse.self,
                 requiresAuth: false
             )
@@ -185,10 +197,11 @@ class AuthManager: ObservableObject {
         let refreshRequest = RefreshTokenRequest(refreshToken: refreshToken)
         let requestData = try JSONEncoder().encode(refreshRequest)
         
-        let response: RefreshTokenResponse = try await APIClient.shared.request(
+        let response: RefreshTokenResponse = try await apiClient.request(
             endpoint: "/auth/refresh",
             method: .POST,
             body: requestData,
+            headers: [:],
             responseType: RefreshTokenResponse.self,
             requiresAuth: false
         )

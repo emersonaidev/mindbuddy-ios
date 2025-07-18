@@ -145,3 +145,38 @@ enum DataSource: String {
     case manual = "manual"
     case other = "other"
 }
+
+// MARK: - Simplified HealthData for UI
+
+extension HealthData {
+    // Convenience initializer for UI components
+    init(type: String, value: HealthDataValue, unit: String, recordedAt: Date) {
+        self.id = UUID().uuidString
+        self.dataType = type
+        self.value = value
+        self.unit = unit
+        self.timestamp = DateUtilities.toISO8601String(recordedAt)
+        self.source = DataSource.appleWatch.rawValue
+        self.createdAt = DateUtilities.toISO8601String(Date())
+    }
+    
+    // Computed properties for UI
+    var type: String {
+        return dataType
+    }
+    
+    var recordedAt: Date {
+        return DateUtilities.fromISO8601String(timestamp) ?? Date()
+    }
+}
+
+// Add double and integer cases to HealthDataValue for UI compatibility
+extension HealthDataValue {
+    static func double(_ value: Double) -> HealthDataValue {
+        return .number(value)
+    }
+    
+    static func integer(_ value: Int) -> HealthDataValue {
+        return .number(Double(value))
+    }
+}

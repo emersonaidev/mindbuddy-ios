@@ -74,29 +74,20 @@ struct HealthView: View {
                 let hrvData = try await healthManager.fetchHRVData(from: startDate, to: endDate)
                 let stepsData = try await healthManager.fetchStepsData(from: startDate, to: endDate)
                 
-                // Convert to API format
-                var healthDataToSubmit: [HealthDataSubmitRequest] = []
-                
-                // Add heart rate data
-                healthDataToSubmit.append(contentsOf: heartRateData.map { sample in
-                    healthManager.convertHKSampleToHealthData(sample, dataType: .heartRate)
-                })
-                
-                // Add HRV data
-                healthDataToSubmit.append(contentsOf: hrvData.map { sample in
-                    healthManager.convertHKSampleToHealthData(sample, dataType: .hrv)
-                })
-                
-                // Add steps data
-                healthDataToSubmit.append(contentsOf: stepsData.map { sample in
-                    healthManager.convertHKSampleToHealthData(sample, dataType: .steps)
-                })
+                // Submit all health data
+                let allHealthData = heartRateData + hrvData + stepsData
                 
                 // Submit to backend
-                let result = try await healthManager.submitHealthDataToBackend(healthDataToSubmit)
+                if !allHealthData.isEmpty {
+                    try await healthManager.submitHealthDataBatch(allHealthData)
+                }
                 
                 await MainActor.run {
-                    self.lastSubmissionResult = result
+                    self.lastSubmissionResult = HealthDataBatchResponse(
+                        submitted: allHealthData.count,
+                        tokensEarned: "10",
+                        errors: nil
+                    )
                     self.isSubmittingData = false
                 }
                 

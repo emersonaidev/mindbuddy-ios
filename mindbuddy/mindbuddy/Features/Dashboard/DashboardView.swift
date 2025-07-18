@@ -205,12 +205,12 @@ struct RecentActivityCard: View {
                 .padding(.horizontal)
             
             VStack(spacing: 12) {
-                if rewardsManager.recentRewards.isEmpty {
+                if rewardsManager.recentRewardsList.isEmpty {
                     Text("No recent activity")
                         .foregroundColor(.secondary)
                         .padding()
                 } else {
-                    ForEach(rewardsManager.recentRewards.prefix(3)) { reward in
+                    ForEach(rewardsManager.recentRewardsList.prefix(3)) { reward in
                         ActivityRow(reward: reward)
                     }
                 }

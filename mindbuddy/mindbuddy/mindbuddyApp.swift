@@ -48,9 +48,33 @@ struct mindbuddyApp: App {
     // Register app delegate for Firebase setup
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     
+    // Initialize dependency container
+    private let dependencies = DependencyContainer.shared
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onAppear {
+                    setupBackgroundTasks()
+                }
+                .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+                    handleAppWillEnterForeground()
+                }
+                .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+                    handleAppDidBecomeActive()
+                }
         }
+    }
+    
+    private func setupBackgroundTasks() {
+        BackgroundTaskManager.shared.registerBackgroundTasks()
+    }
+    
+    private func handleAppWillEnterForeground() {
+        BackgroundTaskManager.shared.handleAppWillEnterBackground()
+    }
+    
+    private func handleAppDidBecomeActive() {
+        BackgroundTaskManager.shared.handleAppDidBecomeActive()
     }
 }

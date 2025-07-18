@@ -1,7 +1,7 @@
 import Foundation
 import Security
 
-class KeychainService {
+class KeychainService: KeychainServiceProtocol {
     static let shared = KeychainService()
     
     private let service = "io.mindbuddy.app"

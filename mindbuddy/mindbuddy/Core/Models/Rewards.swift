@@ -1,5 +1,8 @@
 import Foundation
 
+// Type alias for backward compatibility
+typealias RewardTransaction = TokenTransaction
+
 struct TokenTransaction: Codable, Identifiable {
     let id: String
     let type: TransactionType
