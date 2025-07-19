@@ -1,75 +1,94 @@
 import SwiftUI
+import Charts
 
 struct DashboardView: View {
+    @StateObject private var viewModel = DashboardViewModel()
     @StateObject private var authManager = AuthManager.shared
-    @StateObject private var rewardsManager = RewardsManager.shared
+    @State private var selectedHealthMetric = HealthMetric.heartRate
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 24) {
-                    // Welcome Section
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text("Welcome back,")
-                                    .font(.title2)
-                                    .foregroundColor(.secondary)
-                                
-                                Text(authManager.currentUser?.firstName ?? "User")
-                                    .font(.largeTitle)
-                                    .fontWeight(.bold)
+            ZStack {
+                if viewModel.isLoading && viewModel.heartRateData.isEmpty {
+                    ProgressView("Loading health data...")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    ScrollView {
+                        VStack(spacing: 24) {
+                            // Welcome Section
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    VStack(alignment: .leading) {
+                                        Text("Welcome back,")
+                                            .font(.title2)
+                                            .foregroundColor(.secondary)
+                                        
+                                        Text(authManager.currentUser?.firstName ?? "User")
+                                            .font(.largeTitle)
+                                            .fontWeight(.bold)
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    Menu {
+                                        Button(action: {
+                                            // Navigate to profile
+                                        }) {
+                                            Label("Profile", systemImage: "person.crop.circle")
+                                        }
+                                        
+                                        Button(action: {
+                                            authManager.logout()
+                                        }) {
+                                            Label("Logout", systemImage: "arrow.right.door.fill")
+                                        }
+                                    } label: {
+                                        Image(systemName: "person.circle")
+                                            .font(.title)
+                                            .foregroundColor(.blue)
+                                    }
+                                }
+                                .padding(.horizontal)
                             }
+                            
+                            // Token Balance Card
+                            TokenBalanceCard(viewModel: viewModel)
+                            
+                            // Health Chart Section
+                            HealthChartSection(viewModel: viewModel, selectedMetric: $selectedHealthMetric)
+                            
+                            // Health Stats Grid
+                            HealthStatsGrid(viewModel: viewModel)
+                            
+                            // Recent Activity
+                            RecentActivityCard(viewModel: viewModel)
                             
                             Spacer()
-                            
-                            Button(action: {
-                                authManager.logout()
-                            }) {
-                                Image(systemName: "person.circle")
-                                    .font(.title)
-                                    .foregroundColor(.blue)
-                            }
                         }
-                        .padding(.horizontal)
+                        .padding(.top)
                     }
-                    
-                    // Token Balance Card
-                    TokenBalanceCard()
-                    
-                    // Health Stats Grid
-                    HealthStatsGrid()
-                    
-                    // Recent Activity
-                    RecentActivityCard()
-                    
-                    Spacer()
+                    .navigationBarHidden(true)
+                    .refreshable {
+                        viewModel.refreshData()
+                    }
                 }
-                .padding(.top)
             }
-            .navigationBarHidden(true)
-            .refreshable {
-                await refreshData()
+            .alert("Error", isPresented: $viewModel.hasError) {
+                Button("OK") {}
+            } message: {
+                Text(viewModel.errorMessage)
             }
         }
         .onAppear {
-            Task {
-                await refreshData()
-            }
-        }
-    }
-    
-    private func refreshData() async {
-        do {
-            try await rewardsManager.refreshAllData()
-        } catch {
-            print("Failed to refresh data: \(error)")
+            viewModel.loadDashboardData()
         }
     }
 }
 
+// MARK: - Token Balance Card
+
 struct TokenBalanceCard: View {
-    @StateObject private var rewardsManager = RewardsManager.shared
+    @ObservedObject var viewModel: DashboardViewModel
     
     var body: some View {
         VStack(spacing: 16) {
@@ -79,10 +98,15 @@ struct TokenBalanceCard: View {
                         .font(.headline)
                         .foregroundColor(.secondary)
                     
-                    Text("\(rewardsManager.formatTokenAmount(rewardsManager.tokenBalance)) MNDY")
-                        .font(.title)
-                        .fontWeight(.bold)
-                        .foregroundColor(.primary)
+                    HStack(alignment: .firstTextBaseline, spacing: 4) {
+                        Text(String(format: "%.2f", viewModel.tokenBalance))
+                            .font(.title)
+                            .fontWeight(.bold)
+                            .foregroundColor(.primary)
+                        Text("MNDY")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                    }
                 }
                 
                 Spacer()
@@ -97,7 +121,7 @@ struct TokenBalanceCard: View {
                     Text("Pending Rewards")
                         .font(.caption)
                         .foregroundColor(.secondary)
-                    Text("\(rewardsManager.formatTokenAmount(rewardsManager.pendingRewards)) MNDY")
+                    Text(String(format: "%.2f", viewModel.pendingRewards))
                         .font(.subheadline)
                         .fontWeight(.semibold)
                 }
@@ -108,7 +132,7 @@ struct TokenBalanceCard: View {
                     Text("Total Earned")
                         .font(.caption)
                         .foregroundColor(.secondary)
-                    Text("\(rewardsManager.formatTokenAmount(rewardsManager.totalEarned)) MNDY")
+                    Text(String(format: "%.2f", viewModel.tokenBalance + viewModel.pendingRewards))
                         .font(.subheadline)
                         .fontWeight(.semibold)
                 }
@@ -121,7 +145,105 @@ struct TokenBalanceCard: View {
     }
 }
 
+// MARK: - Health Chart Section
+
+struct HealthChartSection: View {
+    @ObservedObject var viewModel: DashboardViewModel
+    @Binding var selectedMetric: HealthMetric
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("Health Trends")
+                    .font(.headline)
+                
+                Spacer()
+                
+                Picker("Metric", selection: $selectedMetric) {
+                    ForEach(HealthMetric.allCases) { metric in
+                        Text(metric.displayName).tag(metric)
+                    }
+                }
+                .pickerStyle(SegmentedPickerStyle())
+                .frame(width: 200)
+            }
+            .padding(.horizontal)
+            
+            if chartData.isEmpty {
+                EmptyChartView()
+            } else {
+                Chart(chartData) { dataPoint in
+                    LineMark(
+                        x: .value("Time", dataPoint.date),
+                        y: .value(selectedMetric.displayName, dataPoint.value)
+                    )
+                    .foregroundStyle(selectedMetric.color)
+                    .interpolationMethod(.catmullRom)
+                    
+                    AreaMark(
+                        x: .value("Time", dataPoint.date),
+                        y: .value(selectedMetric.displayName, dataPoint.value)
+                    )
+                    .foregroundStyle(selectedMetric.color.opacity(0.1))
+                    .interpolationMethod(.catmullRom)
+                }
+                .frame(height: 200)
+                .padding(.horizontal)
+                .chartYScale(domain: chartYDomain)
+                .chartXAxis {
+                    AxisMarks(values: .automatic(desiredCount: 5)) { _ in
+                        AxisValueLabel()
+                        AxisGridLine()
+                    }
+                }
+            }
+            
+            // Last updated
+            HStack {
+                Image(systemName: "clock")
+                    .font(.caption)
+                Text("Last updated: \(formatLastUpdated(viewModel.lastUpdated))")
+                    .font(.caption)
+            }
+            .foregroundColor(.secondary)
+            .padding(.horizontal)
+        }
+    }
+    
+    private var chartData: [ChartDataPoint] {
+        switch selectedMetric {
+        case .heartRate:
+            return viewModel.heartRateData
+        case .steps:
+            return viewModel.stepsData
+        case .stress:
+            return viewModel.stressData
+        }
+    }
+    
+    private var chartYDomain: ClosedRange<Double> {
+        switch selectedMetric {
+        case .heartRate:
+            return 40...120
+        case .steps:
+            return 0...15000
+        case .stress:
+            return 0...100
+        }
+    }
+    
+    private func formatLastUpdated(_ date: Date) -> String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .abbreviated
+        return formatter.localizedString(for: date, relativeTo: Date())
+    }
+}
+
+// MARK: - Health Stats Grid
+
 struct HealthStatsGrid: View {
+    @ObservedObject var viewModel: DashboardViewModel
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Health Overview")
@@ -131,33 +253,46 @@ struct HealthStatsGrid: View {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
                 HealthStatCard(
                     title: "Heart Rate",
-                    value: "78 BPM",
+                    value: viewModel.currentHeartRate != nil ? "\(Int(viewModel.currentHeartRate!)) BPM" : "--",
                     icon: "heart.fill",
-                    color: .red
+                    color: .red,
+                    isLoading: viewModel.isLoading
                 )
                 
                 HealthStatCard(
                     title: "Stress Level",
-                    value: "Low",
+                    value: viewModel.averageStressLevel,
                     icon: "brain.head.profile",
-                    color: .green
+                    color: stressColor(for: viewModel.averageStressLevel),
+                    isLoading: viewModel.isLoading
                 )
                 
                 HealthStatCard(
                     title: "Steps",
-                    value: "8,432",
+                    value: "\(viewModel.todaySteps.formatted())",
                     icon: "figure.walk",
-                    color: .blue
+                    color: .blue,
+                    isLoading: viewModel.isLoading
                 )
                 
                 HealthStatCard(
                     title: "Sleep",
-                    value: "7.5 hrs",
+                    value: String(format: "%.1f hrs", viewModel.sleepHours),
                     icon: "bed.double.fill",
-                    color: .purple
+                    color: .purple,
+                    isLoading: viewModel.isLoading
                 )
             }
             .padding(.horizontal)
+        }
+    }
+    
+    private func stressColor(for level: String) -> Color {
+        switch level {
+        case "Low": return .green
+        case "Medium": return .orange
+        case "High": return .red
+        default: return .gray
         }
     }
 }
@@ -167,6 +302,7 @@ struct HealthStatCard: View {
     let value: String
     let icon: String
     let color: Color
+    var isLoading: Bool = false
     
     var body: some View {
         VStack(spacing: 8) {
@@ -183,9 +319,15 @@ struct HealthStatCard: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
                 
-                Text(value)
-                    .font(.headline)
-                    .fontWeight(.semibold)
+                if isLoading && value == "--" {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                } else {
+                    Text(value)
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .animation(.easeInOut, value: value)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -195,8 +337,10 @@ struct HealthStatCard: View {
     }
 }
 
+// MARK: - Recent Activity Card
+
 struct RecentActivityCard: View {
-    @StateObject private var rewardsManager = RewardsManager.shared
+    @ObservedObject var viewModel: DashboardViewModel
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -205,13 +349,16 @@ struct RecentActivityCard: View {
                 .padding(.horizontal)
             
             VStack(spacing: 12) {
-                if rewardsManager.recentRewardsList.isEmpty {
-                    Text("No recent activity")
-                        .foregroundColor(.secondary)
-                        .padding()
+                if viewModel.recentActivities.isEmpty {
+                    EmptyStateView(
+                        icon: "chart.line.uptrend.xyaxis",
+                        title: "No recent activity",
+                        description: "Start tracking your health to earn rewards"
+                    )
+                    .padding()
                 } else {
-                    ForEach(rewardsManager.recentRewardsList.prefix(3)) { reward in
-                        ActivityRow(reward: reward)
+                    ForEach(viewModel.recentActivities.prefix(3)) { activity in
+                        ActivityRow(activity: activity)
                     }
                 }
             }
@@ -221,29 +368,34 @@ struct RecentActivityCard: View {
 }
 
 struct ActivityRow: View {
-    let reward: Reward
+    let activity: RecentActivity
     
     var body: some View {
         HStack {
+            Image(systemName: activity.icon)
+                .font(.title2)
+                .foregroundColor(.blue)
+                .frame(width: 40, height: 40)
+                .background(Color.blue.opacity(0.1))
+                .cornerRadius(8)
+            
             VStack(alignment: .leading, spacing: 4) {
-                Text(reward.rewardType.displayName)
+                Text(activity.title)
                     .font(.subheadline)
                     .fontWeight(.medium)
                 
-                if let description = reward.description {
-                    Text(description)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
+                Text(activity.description)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
                 
-                Text(formatDate(reward.createdAt))
+                Text(formatDate(activity.timestamp))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
             
             Spacer()
             
-            Text("+\(RewardsManager.shared.formatTokenAmount(reward.amount)) MNDY")
+            Text("+\(String(format: "%.2f", activity.tokensEarned)) MNDY")
                 .font(.subheadline)
                 .fontWeight(.semibold)
                 .foregroundColor(.green)
@@ -253,16 +405,82 @@ struct ActivityRow: View {
         .cornerRadius(8)
     }
     
-    private func formatDate(_ dateString: String) -> String {
-        let formatter = ISO8601DateFormatter()
-        guard let date = formatter.date(from: dateString) else {
-            return dateString
+    private func formatDate(_ date: Date) -> String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .abbreviated
+        return formatter.localizedString(for: date, relativeTo: Date())
+    }
+}
+
+// MARK: - Supporting Views
+
+struct EmptyStateView: View {
+    let icon: String
+    let title: String
+    let description: String
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.largeTitle)
+                .foregroundColor(.secondary)
+            
+            Text(title)
+                .font(.headline)
+                .foregroundColor(.primary)
+            
+            Text(description)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
         }
-        
-        let displayFormatter = DateFormatter()
-        displayFormatter.dateStyle = .medium
-        displayFormatter.timeStyle = .short
-        return displayFormatter.string(from: date)
+        .frame(maxWidth: .infinity)
+        .padding()
+    }
+}
+
+struct EmptyChartView: View {
+    var body: some View {
+        RoundedRectangle(cornerRadius: 12)
+            .fill(Color(.systemGray6))
+            .frame(height: 200)
+            .overlay(
+                VStack {
+                    Image(systemName: "chart.line.uptrend.xyaxis")
+                        .font(.largeTitle)
+                        .foregroundColor(.secondary)
+                    Text("No data available")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            )
+            .padding(.horizontal)
+    }
+}
+
+// MARK: - Supporting Types
+
+enum HealthMetric: String, CaseIterable, Identifiable {
+    case heartRate = "heartRate"
+    case steps = "steps"
+    case stress = "stress"
+    
+    var id: String { rawValue }
+    
+    var displayName: String {
+        switch self {
+        case .heartRate: return "Heart Rate"
+        case .steps: return "Steps"
+        case .stress: return "Stress"
+        }
+    }
+    
+    var color: Color {
+        switch self {
+        case .heartRate: return .red
+        case .steps: return .blue
+        case .stress: return .purple
+        }
     }
 }
 

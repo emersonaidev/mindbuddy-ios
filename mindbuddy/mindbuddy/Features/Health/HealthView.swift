@@ -2,109 +2,117 @@ import SwiftUI
 import HealthKit
 
 struct HealthView: View {
-    @StateObject private var healthManager = HealthManager.shared
-    @State private var isRequestingPermission = false
-    @State private var showingError = false
-    @State private var errorMessage = ""
-    @State private var isSubmittingData = false
-    @State private var lastSubmissionResult: HealthDataBatchResponse?
+    @StateObject private var viewModel = HealthViewModel()
+    @State private var showingHealthKitPermission = false
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 24) {
-                    // Health Authorization Status
-                    HealthAuthorizationCard()
-                    
-                    // Health Data Overview
-                    if healthManager.authorizationStatus == .sharingAuthorized {
-                        HealthDataOverview()
-                        
-                        // Submit Data Button
-                        Button(action: submitHealthData) {
-                            HStack {
-                                if isSubmittingData {
-                                    ProgressView()
-                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                        .scaleEffect(0.8)
-                                } else {
-                                    Image(systemName: "cloud.fill")
-                                    Text("Submit Health Data")
-                                        .fontWeight(.semibold)
+            ZStack {
+                if viewModel.isLoading && viewModel.collectedData.isEmpty {
+                    ProgressView("Loading health data...")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    ScrollView {
+                        VStack(spacing: 24) {
+                            // Health Authorization Status
+                            HealthAuthorizationCard(
+                                viewModel: viewModel,
+                                showingHealthKitPermission: $showingHealthKitPermission
+                            )
+                            
+                            // Health Data Overview
+                            if viewModel.authorizationStatus == .sharingAuthorized {
+                                HealthDataTypesSection(viewModel: viewModel)
+                                
+                                // Collected Data Summary
+                                if !viewModel.collectedData.isEmpty {
+                                    CollectedDataSummary(viewModel: viewModel)
                                 }
+                                
+                                // Action Buttons
+                                VStack(spacing: 12) {
+                                    Button(action: {
+                                        Task {
+                                            await viewModel.collectHealthData()
+                                        }
+                                    }) {
+                                        Label("Collect Health Data", systemImage: "arrow.down.circle.fill")
+                                            .frame(maxWidth: .infinity)
+                                            .padding()
+                                            .background(Color.blue)
+                                            .foregroundColor(.white)
+                                            .cornerRadius(12)
+                                    }
+                                    .disabled(viewModel.isLoading || viewModel.selectedDataTypes.isEmpty)
+                                    
+                                    Button(action: {
+                                        Task {
+                                            await viewModel.submitHealthData()
+                                        }
+                                    }) {
+                                        HStack {
+                                            if viewModel.isSubmitting {
+                                                ProgressView()
+                                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                                    .scaleEffect(0.8)
+                                            } else {
+                                                Label("Submit to Earn Rewards", systemImage: "cloud.fill")
+                                            }
+                                        }
+                                        .frame(maxWidth: .infinity)
+                                        .padding()
+                                        .background(viewModel.collectedData.isEmpty ? Color.gray : Color.green)
+                                        .foregroundColor(.white)
+                                        .cornerRadius(12)
+                                    }
+                                    .disabled(viewModel.isSubmitting || viewModel.collectedData.isEmpty)
+                                }
+                                .padding(.horizontal)
+                                
+                                // Last submission result
+                                if let result = viewModel.submissionResult {
+                                    SubmissionResultCard(result: result)
+                                }
+                            } else {
+                                // Not authorized state
+                                EmptyStateView(
+                                    icon: "heart.text.square",
+                                    title: "Health Access Required",
+                                    description: "Grant access to your health data to start earning rewards"
+                                )
+                                .padding()
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
+                            
+                            Spacer()
                         }
-                        .disabled(isSubmittingData)
-                        .padding(.horizontal)
-                        
-                        // Last submission result
-                        if let result = lastSubmissionResult {
-                            SubmissionResultCard(result: result)
-                        }
+                        .padding(.top)
                     }
-                    
-                    Spacer()
+                    .navigationTitle("Health Data")
+                    .refreshable {
+                        await viewModel.refreshData()
+                    }
                 }
-                .padding(.top)
             }
-            .navigationTitle("Health Data")
-            .alert("Error", isPresented: $showingError) {
-                Button("OK") { }
+            .alert("Error", isPresented: $viewModel.hasError) {
+                Button("OK") {}
             } message: {
-                Text(errorMessage)
+                Text(viewModel.errorMessage)
             }
-        }
-    }
-    
-    private func submitHealthData() {
-        isSubmittingData = true
-        
-        Task {
-            do {
-                let endDate = Date()
-                let startDate = Calendar.current.date(byAdding: .hour, value: -1, to: endDate) ?? endDate
-                
-                // Fetch recent health data
-                let heartRateData = try await healthManager.fetchHeartRateData(from: startDate, to: endDate)
-                let hrvData = try await healthManager.fetchHRVData(from: startDate, to: endDate)
-                let stepsData = try await healthManager.fetchStepsData(from: startDate, to: endDate)
-                
-                // Submit all health data
-                let allHealthData = heartRateData + hrvData + stepsData
-                
-                // Submit to backend
-                if !allHealthData.isEmpty {
-                    try await healthManager.submitHealthDataBatch(allHealthData)
-                }
-                
-                await MainActor.run {
-                    self.lastSubmissionResult = HealthDataBatchResponse(
-                        submitted: allHealthData.count,
-                        tokensEarned: "10",
-                        errors: nil
-                    )
-                    self.isSubmittingData = false
-                }
-                
-            } catch {
-                await MainActor.run {
-                    self.isSubmittingData = false
-                    self.errorMessage = error.localizedDescription
-                    self.showingError = true
-                }
+            .sheet(isPresented: $showingHealthKitPermission) {
+                HealthKitPermissionView(isPresented: $showingHealthKitPermission)
+                    .onDisappear {
+                        viewModel.checkAuthorizationStatus()
+                    }
             }
         }
     }
 }
 
+// MARK: - Health Authorization Card
+
 struct HealthAuthorizationCard: View {
-    @StateObject private var healthManager = HealthManager.shared
-    @State private var isRequestingPermission = false
+    @ObservedObject var viewModel: HealthViewModel
+    @Binding var showingHealthKitPermission: Bool
     
     var body: some View {
         VStack(spacing: 16) {
@@ -123,27 +131,26 @@ struct HealthAuthorizationCard: View {
                 }
                 
                 Spacer()
+                
+                if viewModel.authorizationStatus == .sharingAuthorized {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.title2)
+                        .foregroundColor(.green)
+                }
             }
             
-            if healthManager.authorizationStatus != .sharingAuthorized {
-                Button(action: requestPermission) {
-                    HStack {
-                        if isRequestingPermission {
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                .scaleEffect(0.8)
-                        } else {
-                            Text("Request Access")
-                                .fontWeight(.semibold)
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
+            if viewModel.authorizationStatus != .sharingAuthorized {
+                Button(action: {
+                    showingHealthKitPermission = true
+                }) {
+                    Text("Request Access")
+                        .fontWeight(.semibold)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
                 }
-                .disabled(isRequestingPermission)
             }
         }
         .padding()
@@ -153,7 +160,7 @@ struct HealthAuthorizationCard: View {
     }
     
     private var statusText: String {
-        switch healthManager.authorizationStatus {
+        switch viewModel.authorizationStatus {
         case .notDetermined:
             return "Tap to request access to your health data"
         case .sharingAuthorized:
@@ -164,60 +171,37 @@ struct HealthAuthorizationCard: View {
             return "Unknown status"
         }
     }
-    
-    private func requestPermission() {
-        isRequestingPermission = true
-        
-        Task {
-            do {
-                try await healthManager.requestAuthorization()
-                await MainActor.run {
-                    self.isRequestingPermission = false
-                }
-            } catch {
-                await MainActor.run {
-                    self.isRequestingPermission = false
-                }
-            }
-        }
-    }
 }
 
-struct HealthDataOverview: View {
+// MARK: - Health Data Types Section
+
+struct HealthDataTypesSection: View {
+    @ObservedObject var viewModel: HealthViewModel
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Available Data Types")
-                .font(.headline)
-                .padding(.horizontal)
+            HStack {
+                Text("Select Data Types")
+                    .font(.headline)
+                
+                Spacer()
+                
+                Text("\(viewModel.selectedDataTypes.count) selected")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding(.horizontal)
             
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
-                HealthDataTypeCard(
-                    title: "Heart Rate",
-                    icon: "heart.fill",
-                    color: .red,
-                    isAvailable: true
-                )
-                
-                HealthDataTypeCard(
-                    title: "HRV",
-                    icon: "waveform.path.ecg",
-                    color: .orange,
-                    isAvailable: true
-                )
-                
-                HealthDataTypeCard(
-                    title: "Steps",
-                    icon: "figure.walk",
-                    color: .blue,
-                    isAvailable: true
-                )
-                
-                HealthDataTypeCard(
-                    title: "Sleep",
-                    icon: "bed.double.fill",
-                    color: .purple,
-                    isAvailable: false
-                )
+                ForEach(viewModel.availableDataTypes) { dataTypeInfo in
+                    HealthDataTypeCard(
+                        dataTypeInfo: dataTypeInfo,
+                        isSelected: viewModel.selectedDataTypes.contains(dataTypeInfo.type),
+                        action: {
+                            viewModel.toggleDataType(dataTypeInfo.type)
+                        }
+                    )
+                }
             }
             .padding(.horizontal)
         }
@@ -225,81 +209,233 @@ struct HealthDataOverview: View {
 }
 
 struct HealthDataTypeCard: View {
-    let title: String
+    let dataTypeInfo: HealthDataTypeInfo
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 8) {
+                HStack {
+                    Image(systemName: dataTypeInfo.icon)
+                        .font(.title2)
+                        .foregroundColor(dataTypeInfo.isAvailable ? dataTypeInfo.color : .gray)
+                    
+                    Spacer()
+                    
+                    if isSelected {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.title3)
+                            .foregroundColor(.blue)
+                    }
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(dataTypeInfo.title)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(dataTypeInfo.isAvailable ? .primary : .secondary)
+                    
+                    Text(dataTypeInfo.description)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color(.systemGray6))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                    )
+            )
+        }
+        .disabled(!dataTypeInfo.isAvailable)
+    }
+}
+
+// MARK: - Collected Data Summary
+
+struct CollectedDataSummary: View {
+    @ObservedObject var viewModel: HealthViewModel
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Collected Data")
+                .font(.headline)
+                .padding(.horizontal)
+            
+            // Summary cards
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(summarizedData, id: \.type) { summary in
+                        DataSummaryCard(
+                            type: summary.type,
+                            count: summary.count,
+                            icon: summary.icon,
+                            color: summary.color
+                        )
+                    }
+                }
+                .padding(.horizontal)
+            }
+            
+            // Estimated rewards
+            HStack {
+                Label("Estimated Rewards", systemImage: "bitcoinsign.circle.fill")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                
+                Spacer()
+                
+                Text("+\(String(format: "%.2f", estimatedRewards)) MNDY")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.green)
+            }
+            .padding()
+            .background(Color(.systemGray6))
+            .cornerRadius(10)
+            .padding(.horizontal)
+        }
+    }
+    
+    private var summarizedData: [(type: String, count: Int, icon: String, color: Color)] {
+        let grouped = Dictionary(grouping: viewModel.collectedData) { $0.type }
+        return grouped.map { (key, value) in
+            let dataType = HealthDataType(rawValue: key) ?? .heartRate
+            return (
+                type: dataType.displayName,
+                count: value.count,
+                icon: dataType.icon,
+                color: dataType.color
+            )
+        }
+    }
+    
+    private var estimatedRewards: Double {
+        let rewards: [String: Double] = [
+            "heartRate": 0.1,
+            "hrv": 0.15,
+            "steps": 0.05,
+            "sleep": 1.0,
+            "bloodPressure": 0.2,
+            "calories": 0.05
+        ]
+        
+        return viewModel.collectedData.reduce(0) { total, data in
+            total + (rewards[data.type] ?? 0.1)
+        }
+    }
+}
+
+struct DataSummaryCard: View {
+    let type: String
+    let count: Int
     let icon: String
     let color: Color
-    let isAvailable: Bool
     
     var body: some View {
         VStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.title2)
-                .foregroundColor(isAvailable ? color : .gray)
+                .foregroundColor(color)
             
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundColor(isAvailable ? .primary : .secondary)
+            Text("\(count)")
+                .font(.headline)
+                .fontWeight(.bold)
             
-            Text(isAvailable ? "Available" : "Coming Soon")
+            Text(type)
                 .font(.caption)
-                .foregroundColor(isAvailable ? .green : .orange)
+                .foregroundColor(.secondary)
         }
+        .frame(width: 100)
         .padding()
         .background(Color(.systemGray6))
         .cornerRadius(10)
     }
 }
 
+// MARK: - Submission Result Card
+
 struct SubmissionResultCard: View {
-    let result: HealthDataBatchResponse
+    let result: SubmissionResult
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Submission Result")
-                .font(.headline)
-            
             HStack {
-                VStack(alignment: .leading) {
-                    Text("Data Points Submitted")
-                        .font(.caption)
+                Image(systemName: result.success ? "checkmark.circle.fill" : "xmark.circle.fill")
+                    .font(.title2)
+                    .foregroundColor(result.success ? .green : .red)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(result.success ? "Success!" : "Failed")
+                        .font(.headline)
+                    
+                    Text(result.message)
+                        .font(.subheadline)
                         .foregroundColor(.secondary)
-                    Text("\(result.submitted)")
-                        .font(.title3)
-                        .fontWeight(.semibold)
                 }
                 
                 Spacer()
-                
-                VStack(alignment: .trailing) {
+            }
+            
+            if result.success && result.tokensEarned > 0 {
+                HStack {
                     Text("Tokens Earned")
                         .font(.caption)
                         .foregroundColor(.secondary)
-                    Text("\(result.tokensEarned) MNDY")
-                        .font(.title3)
+                    
+                    Spacer()
+                    
+                    Text("+\(String(format: "%.2f", result.tokensEarned)) MNDY")
+                        .font(.headline)
                         .fontWeight(.semibold)
                         .foregroundColor(.green)
                 }
-            }
-            
-            if let errors = result.errors, !errors.isEmpty {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Errors:")
-                        .font(.caption)
-                        .foregroundColor(.red)
-                    
-                    ForEach(errors.prefix(3), id: \.index) { error in
-                        Text("• \(error.error)")
-                            .font(.caption)
-                            .foregroundColor(.red)
-                    }
-                }
+                .padding(.top, 8)
             }
         }
         .padding()
-        .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(result.success ? Color.green.opacity(0.1) : Color.red.opacity(0.1))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(result.success ? Color.green : Color.red, lineWidth: 1)
+        )
         .padding(.horizontal)
+    }
+}
+
+// MARK: - Supporting Views
+
+struct EmptyStateView: View {
+    let icon: String
+    let title: String
+    let description: String
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.largeTitle)
+                .foregroundColor(.secondary)
+            
+            Text(title)
+                .font(.headline)
+                .foregroundColor(.primary)
+            
+            Text(description)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding()
     }
 }
 
