@@ -82,6 +82,9 @@ struct DashboardView: View {
         .onAppear {
             viewModel.loadDashboardData()
         }
+        .handleErrors(with: viewModel.errorRecovery) {
+            await viewModel.loadDashboardData()
+        }
     }
 }
 
@@ -350,7 +353,7 @@ struct RecentActivityCard: View {
             
             VStack(spacing: 12) {
                 if viewModel.recentActivities.isEmpty {
-                    EmptyStateView(
+                    DashboardEmptyStateView(
                         icon: "chart.line.uptrend.xyaxis",
                         title: "No recent activity",
                         description: "Start tracking your health to earn rewards"
@@ -414,7 +417,7 @@ struct ActivityRow: View {
 
 // MARK: - Supporting Views
 
-struct EmptyStateView: View {
+struct DashboardEmptyStateView: View {
     let icon: String
     let title: String
     let description: String

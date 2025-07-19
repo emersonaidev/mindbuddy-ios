@@ -7,6 +7,7 @@ class RewardsManager: ObservableObject, RewardsServiceProtocol {
     @Published var pendingRewards: String = "0"
     @Published var totalEarned: String = "0"
     @Published var recentRewardsList: [Reward] = []
+    @Published var recentActivities: [RecentActivity] = []
     private var _recentRewards: [Reward] = [] {
         didSet {
             recentRewardsList = _recentRewards
@@ -47,14 +48,27 @@ class RewardsManager: ObservableObject, RewardsServiceProtocol {
             throw RewardsError.notAuthenticated
         }
         
-        let response: TokenBalanceResponse = try await apiClient.request(
-            endpoint: "/rewards/balance",
-            method: .GET,
-            body: nil,
-            headers: ["Authorization": "Bearer \(token)"],
-            responseType: TokenBalanceResponse.self,
-            requiresAuth: true
-        )
+        let response: TokenBalanceResponse
+        if let apiClient = apiClient as? APIClient {
+            response = try await apiClient.requestWithRetry(
+                endpoint: "/rewards/balance",
+                method: .GET,
+                body: nil,
+                headers: ["Authorization": "Bearer \(token)"],
+                responseType: TokenBalanceResponse.self,
+                requiresAuth: true,
+                retryPolicy: .default
+            )
+        } else {
+            response = try await apiClient.request(
+                endpoint: "/rewards/balance",
+                method: .GET,
+                body: nil,
+                headers: ["Authorization": "Bearer \(token)"],
+                responseType: TokenBalanceResponse.self,
+                requiresAuth: true
+            )
+        }
         
         await MainActor.run {
             self.tokenBalance = response.balance
@@ -68,14 +82,27 @@ class RewardsManager: ObservableObject, RewardsServiceProtocol {
             throw RewardsError.notAuthenticated
         }
         
-        let response: RewardHistoryResponse = try await apiClient.request(
-            endpoint: "/rewards/history?limit=\(limit)&offset=\(offset)",
-            method: .GET,
-            body: nil,
-            headers: ["Authorization": "Bearer \(token)"],
-            responseType: RewardHistoryResponse.self,
-            requiresAuth: true
-        )
+        let response: RewardHistoryResponse
+        if let apiClient = apiClient as? APIClient {
+            response = try await apiClient.requestWithRetry(
+                endpoint: "/rewards/history?limit=\(limit)&offset=\(offset)",
+                method: .GET,
+                body: nil,
+                headers: ["Authorization": "Bearer \(token)"],
+                responseType: RewardHistoryResponse.self,
+                requiresAuth: true,
+                retryPolicy: .default
+            )
+        } else {
+            response = try await apiClient.request(
+                endpoint: "/rewards/history?limit=\(limit)&offset=\(offset)",
+                method: .GET,
+                body: nil,
+                headers: ["Authorization": "Bearer \(token)"],
+                responseType: RewardHistoryResponse.self,
+                requiresAuth: true
+            )
+        }
         
         await MainActor.run {
             if offset == 0 {
@@ -91,6 +118,39 @@ class RewardsManager: ObservableObject, RewardsServiceProtocol {
     func refreshAllData() async throws {
         try await fetchTokenBalance()
         _ = try await fetchRewardHistory()
+        try await fetchRecentActivities()
+    }
+    
+    func fetchRecentActivities() async throws {
+        guard let token = authService.getAccessToken() else {
+            throw RewardsError.notAuthenticated
+        }
+        
+        let activities: [RecentActivity]
+        if let apiClient = apiClient as? APIClient {
+            activities = try await apiClient.requestWithRetry(
+                endpoint: "/rewards/recent",
+                method: .GET,
+                body: nil,
+                headers: ["Authorization": "Bearer \(token)"],
+                responseType: [RecentActivity].self,
+                requiresAuth: true,
+                retryPolicy: .default
+            )
+        } else {
+            activities = try await apiClient.request(
+                endpoint: "/rewards/recent",
+                method: .GET,
+                body: nil,
+                headers: ["Authorization": "Bearer \(token)"],
+                responseType: [RecentActivity].self,
+                requiresAuth: true
+            )
+        }
+        
+        await MainActor.run {
+            self.recentActivities = activities
+        }
     }
     
     func formatTokenAmount(_ amount: String) -> String {
@@ -120,14 +180,27 @@ class RewardsManager: ObservableObject, RewardsServiceProtocol {
         let requestData = ["submissionId": healthDataSubmission]
         let body = try JSONEncoder().encode(requestData)
         
-        let response: TokenTransaction = try await apiClient.request(
-            endpoint: "/rewards/claim",
-            method: .POST,
-            body: body,
-            headers: ["Authorization": "Bearer \(token)"],
-            responseType: TokenTransaction.self,
-            requiresAuth: true
-        )
+        let response: TokenTransaction
+        if let apiClient = apiClient as? APIClient {
+            response = try await apiClient.requestWithRetry(
+                endpoint: "/rewards/claim",
+                method: .POST,
+                body: body,
+                headers: ["Authorization": "Bearer \(token)"],
+                responseType: TokenTransaction.self,
+                requiresAuth: true,
+                retryPolicy: .aggressive  // More aggressive for important transactions
+            )
+        } else {
+            response = try await apiClient.request(
+                endpoint: "/rewards/claim",
+                method: .POST,
+                body: body,
+                headers: ["Authorization": "Bearer \(token)"],
+                responseType: TokenTransaction.self,
+                requiresAuth: true
+            )
+        }
         
         // Refresh balance after claiming
         try await fetchTokenBalance()

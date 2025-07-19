@@ -138,14 +138,27 @@ class HealthManager: ObservableObject, HealthServiceProtocol {
         let batchRequest = HealthDataBatchRequest(data: healthData)
         let requestData = try JSONEncoder().encode(batchRequest)
         
-        let response: HealthDataBatchResponse = try await apiClient.request(
-            endpoint: "/health-data/batch",
-            method: .POST,
-            body: requestData,
-            headers: ["Authorization": "Bearer \(token)"],
-            responseType: HealthDataBatchResponse.self,
-            requiresAuth: true
-        )
+        let response: HealthDataBatchResponse
+        if let apiClient = apiClient as? APIClient {
+            response = try await apiClient.requestWithRetry(
+                endpoint: "/health-data/batch",
+                method: .POST,
+                body: requestData,
+                headers: ["Authorization": "Bearer \(token)"],
+                responseType: HealthDataBatchResponse.self,
+                requiresAuth: true,
+                retryPolicy: .aggressive  // Important health data submission
+            )
+        } else {
+            response = try await apiClient.request(
+                endpoint: "/health-data/batch",
+                method: .POST,
+                body: requestData,
+                headers: ["Authorization": "Bearer \(token)"],
+                responseType: HealthDataBatchResponse.self,
+                requiresAuth: true
+            )
+        }
         
         return response
     }

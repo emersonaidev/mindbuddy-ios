@@ -3,7 +3,7 @@ import Combine
 import HealthKit
 
 @MainActor
-class DashboardViewModel: ObservableObject {
+class DashboardViewModel: ObservableObject, ErrorHandlingViewModel {
     @Published var isLoading = false
     @Published var hasError = false
     @Published var errorMessage = ""
@@ -27,13 +27,16 @@ class DashboardViewModel: ObservableObject {
     
     private let healthManager: HealthServiceProtocol
     private let rewardsManager: RewardsServiceProtocol
-    private let authManager: AuthServiceProtocol
+    private let authManager: AuthenticationServiceProtocol
     private var cancellables = Set<AnyCancellable>()
     
+    // Error handling
+    let errorRecovery = ErrorRecovery()
+    
     init(
-        healthManager: HealthServiceProtocol = DependencyContainer.shared.healthManager,
-        rewardsManager: RewardsServiceProtocol = DependencyContainer.shared.rewardsManager,
-        authManager: AuthServiceProtocol = DependencyContainer.shared.authManager
+        healthManager: HealthServiceProtocol = DependencyContainer.shared.healthService,
+        rewardsManager: RewardsServiceProtocol = DependencyContainer.shared.rewardsService,
+        authManager: AuthenticationServiceProtocol = DependencyContainer.shared.authService
     ) {
         self.healthManager = healthManager
         self.rewardsManager = rewardsManager
@@ -43,18 +46,19 @@ class DashboardViewModel: ObservableObject {
     }
     
     private func setupSubscriptions() {
-        // Subscribe to rewards updates
-        rewardsManager.balancePublisher
-            .receive(on: DispatchQueue.main)
-            .assign(to: &$tokenBalance)
-        
-        rewardsManager.pendingRewardsPublisher
-            .receive(on: DispatchQueue.main)
-            .assign(to: &$pendingRewards)
-        
-        rewardsManager.recentActivitiesPublisher
-            .receive(on: DispatchQueue.main)
-            .assign(to: &$recentActivities)
+        // Subscribe to rewards updates from RewardsManager
+        if let rewardsManager = rewardsManager as? RewardsManager {
+            rewardsManager.$tokenBalance
+                .map { Double($0) ?? 0.0 }
+                .assign(to: &$tokenBalance)
+            
+            rewardsManager.$pendingRewards
+                .map { Double($0) ?? 0.0 }
+                .assign(to: &$pendingRewards)
+            
+            rewardsManager.$recentActivities
+                .assign(to: &$recentActivities)
+        }
     }
     
     func loadDashboardData() {
@@ -106,21 +110,24 @@ class DashboardViewModel: ObservableObject {
             // Update current heart rate
             if let latestReading = heartRateData.first {
                 await MainActor.run {
-                    if case .double(let value) = latestReading.value {
+                    switch latestReading.value {
+                    case .number(let value):
                         self.currentHeartRate = value
+                    default:
+                        break
                     }
                 }
             }
             
             // Update chart data
             let chartData = heartRateData.prefix(50).map { data -> ChartDataPoint in
-                let value = {
-                    switch data.value {
-                    case .double(let v): return v
-                    case .integer(let v): return Double(v)
-                    default: return 0
-                    }
-                }()
+                let value: Double
+                switch data.value {
+                case .number(let v):
+                    value = v
+                default:
+                    value = 0
+                }
                 return ChartDataPoint(date: data.recordedAt, value: value)
             }
             
@@ -128,7 +135,9 @@ class DashboardViewModel: ObservableObject {
                 self.heartRateData = chartData
             }
         } catch {
-            print("Error fetching heart rate: \(error)")
+            handleError(error, context: "Fetching heart rate") {
+                try await self.fetchHeartRateData()
+            }
         }
     }
     
@@ -142,9 +151,10 @@ class DashboardViewModel: ObservableObject {
             // Calculate total steps for today
             let totalSteps = stepsData.reduce(0) { total, data in
                 switch data.value {
-                case .integer(let steps): return total + steps
-                case .double(let steps): return total + Int(steps)
-                default: return total
+                case .number(let steps):
+                    return total + Int(steps)
+                default:
+                    return total
                 }
             }
             
@@ -164,9 +174,10 @@ class DashboardViewModel: ObservableObject {
             let chartData = grouped.map { (date, dataPoints) -> ChartDataPoint in
                 let total = dataPoints.reduce(0) { sum, data in
                     switch data.value {
-                    case .integer(let steps): return sum + Double(steps)
-                    case .double(let steps): return sum + steps
-                    default: return sum
+                    case .number(let steps):
+                        return sum + steps
+                    default:
+                        return sum
                     }
                 }
                 return ChartDataPoint(date: date, value: total)
@@ -176,7 +187,9 @@ class DashboardViewModel: ObservableObject {
                 self.stepsData = chartData
             }
         } catch {
-            print("Error fetching steps: \(error)")
+            handleError(error, context: "Fetching steps") {
+                try await self.fetchStepsData()
+            }
         }
     }
     
@@ -190,8 +203,10 @@ class DashboardViewModel: ObservableObject {
             // Calculate total sleep hours
             let totalHours = sleepData.reduce(0) { total, data in
                 switch data.value {
-                case .double(let hours): return total + hours
-                default: return total
+                case .number(let hours):
+                    return total + hours
+                default:
+                    return total
                 }
             }
             
@@ -199,16 +214,24 @@ class DashboardViewModel: ObservableObject {
                 self.sleepHours = totalHours
             }
         } catch {
-            print("Error fetching sleep data: \(error)")
+            handleError(error, context: "Fetching sleep data") {
+                try await self.fetchSleepData()
+            }
         }
     }
     
     private func fetchRewardsData() async {
         do {
-            try await rewardsManager.fetchTokenBalance()
-            try await rewardsManager.fetchRecentActivities()
+            if let rewardsManager = rewardsManager as? RewardsManager {
+                try await rewardsManager.refreshAllData()
+            } else {
+                try await rewardsManager.fetchTokenBalance()
+                try await rewardsManager.fetchRewardHistory()
+            }
         } catch {
-            print("Error fetching rewards: \(error)")
+            handleError(error, context: "Fetching rewards") {
+                try await self.fetchRewardsData()
+            }
         }
     }
     
@@ -224,8 +247,10 @@ class DashboardViewModel: ObservableObject {
             // Calculate average HRV
             let totalHRV = hrvData.reduce(0) { sum, data in
                 switch data.value {
-                case .double(let hrv): return sum + hrv
-                default: return sum
+                case .number(let hrv):
+                    return sum + hrv
+                default:
+                    return sum
                 }
             }
             
@@ -247,12 +272,13 @@ class DashboardViewModel: ObservableObject {
             
             // Create stress chart data
             let stressChartData = hrvData.prefix(20).map { data -> ChartDataPoint in
-                let hrv = {
-                    switch data.value {
-                    case .double(let v): return v
-                    default: return 0
-                    }
-                }()
+                let hrv: Double
+                switch data.value {
+                case .number(let v):
+                    hrv = v
+                default:
+                    hrv = 0
+                }
                 // Convert HRV to stress score (inverse relationship)
                 let stressScore = max(0, min(100, 100 - (hrv / 100 * 100)))
                 return ChartDataPoint(date: data.recordedAt, value: stressScore)
@@ -281,11 +307,20 @@ struct ChartDataPoint: Identifiable {
     let value: Double
 }
 
-struct RecentActivity: Identifiable {
-    let id = UUID()
+struct RecentActivity: Identifiable, Codable {
+    let id: String
     let title: String
     let description: String
     let tokensEarned: Double
     let timestamp: Date
     let icon: String
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case title
+        case description
+        case tokensEarned
+        case timestamp
+        case icon
+    }
 }
