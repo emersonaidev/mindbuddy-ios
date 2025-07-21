@@ -138,10 +138,10 @@ struct ProfileView: View {
         } else if let user = authManager.currentUser {
             editedProfile = UserProfile(
                 id: 0,
-                firebaseUID: user.uid,
-                email: user.email ?? "",
-                firstName: user.firstName ?? "",
-                lastName: user.lastName ?? ""
+                firebaseUID: user.id,
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName
             )
         }
     }
@@ -397,23 +397,13 @@ struct ConnectedServicesSection: View {
                     isConnected: true
                 )
                 
-                if let provider = authManager.currentUser?.providerID {
-                    if provider.contains("apple") {
-                        ConnectedServiceRow(
-                            service: "Sign in with Apple",
-                            icon: "applelogo",
-                            color: .black,
-                            isConnected: true
-                        )
-                    } else if provider.contains("google") {
-                        ConnectedServiceRow(
-                            service: "Google Account",
-                            icon: "g.circle.fill",
-                            color: .red,
-                            isConnected: true
-                        )
-                    }
-                }
+                // Show auth provider if available
+                ConnectedServiceRow(
+                    service: "Email Account",
+                    icon: "envelope.fill",
+                    color: .blue,
+                    isConnected: authManager.currentUser != nil
+                )
             }
             .padding(.horizontal)
         }

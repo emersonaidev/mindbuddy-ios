@@ -142,7 +142,7 @@ struct ActiveChallengesSection: View {
     var body: some View {
         VStack(spacing: 12) {
             if challenges.isEmpty {
-                EmptyStateView(
+                ChallengesEmptyStateView(
                     icon: "target",
                     title: "No Active Challenges",
                     description: "Join a challenge to start earning rewards!"
@@ -376,7 +376,7 @@ struct CompletedChallengesSection: View {
     var body: some View {
         VStack(spacing: 12) {
             if challenges.isEmpty {
-                EmptyStateView(
+                ChallengesEmptyStateView(
                     icon: "trophy",
                     title: "No Completed Challenges",
                     description: "Complete your first challenge to see it here!"
@@ -640,7 +640,7 @@ struct ChallengeLeaderboardView: View {
 
 // MARK: - Empty State
 
-struct EmptyStateView: View {
+struct ChallengesEmptyStateView: View {
     let icon: String
     let title: String
     let description: String

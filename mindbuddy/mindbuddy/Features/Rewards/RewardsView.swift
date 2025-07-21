@@ -159,8 +159,8 @@ struct TokenBalanceOverview: View {
                 
                 // Progress indicator
                 ProgressBar(
-                    value: Double(rewardsManager.pendingRewards),
-                    total: Double(rewardsManager.tokenBalance + rewardsManager.pendingRewards),
+                    value: Double(rewardsManager.pendingRewards) ?? 0,
+                    total: (Double(rewardsManager.tokenBalance) ?? 0) + (Double(rewardsManager.pendingRewards) ?? 0),
                     label: "Progress to next milestone"
                 )
                 
@@ -279,7 +279,7 @@ struct StatsOverview: View {
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 16) {
-                StatCard(
+                RewardStatCard(
                     title: "This Week",
                     value: "125.5",
                     unit: "MNDY",
@@ -288,7 +288,7 @@ struct StatsOverview: View {
                     color: .blue
                 )
                 
-                StatCard(
+                RewardStatCard(
                     title: "This Month",
                     value: "485.2",
                     unit: "MNDY",
@@ -297,7 +297,7 @@ struct StatsOverview: View {
                     color: .purple
                 )
                 
-                StatCard(
+                RewardStatCard(
                     title: "Avg Daily",
                     value: "17.8",
                     unit: "MNDY",
@@ -311,7 +311,7 @@ struct StatsOverview: View {
     }
 }
 
-struct StatCard: View {
+struct RewardStatCard: View {
     let title: String
     let value: String
     let unit: String
@@ -623,7 +623,6 @@ struct RewardDetailView: View {
                         }
                         
                         DetailRow(label: "Date", value: formatDate(reward.createdAt))
-                        DetailRow(label: "Status", value: reward.status)
                         DetailRow(label: "Transaction ID", value: String(reward.id.prefix(8)) + "...")
                     }
                     .padding()

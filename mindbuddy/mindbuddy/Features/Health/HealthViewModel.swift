@@ -12,7 +12,7 @@ class HealthViewModel: ObservableObject {
     @Published var submissionResult: SubmissionResult?
     
     // Available data types
-    @Published var availableDataTypes: [HealthDataTypeInfo] = []
+    @Published var availableDataTypes: [HealthDataTypeViewModel] = []
     @Published var selectedDataTypes: Set<HealthDataType> = []
     
     // Collected data
@@ -20,12 +20,12 @@ class HealthViewModel: ObservableObject {
     @Published var lastSubmissionDate: Date?
     
     private let healthManager: HealthServiceProtocol
-    private let authManager: AuthServiceProtocol
+    private let authManager: AuthenticationServiceProtocol
     private var cancellables = Set<AnyCancellable>()
     
     init(
-        healthManager: HealthServiceProtocol = DependencyContainer.shared.healthManager,
-        authManager: AuthServiceProtocol = DependencyContainer.shared.authManager
+        healthManager: HealthServiceProtocol = DependencyContainer.shared.healthService,
+        authManager: AuthenticationServiceProtocol = DependencyContainer.shared.authService
     ) {
         self.healthManager = healthManager
         self.authManager = authManager
@@ -36,7 +36,7 @@ class HealthViewModel: ObservableObject {
     
     private func setupAvailableDataTypes() {
         availableDataTypes = [
-            HealthDataTypeInfo(
+            HealthDataTypeViewModel(
                 type: .heartRate,
                 title: "Heart Rate",
                 description: "Monitor your heart health",
@@ -44,7 +44,7 @@ class HealthViewModel: ObservableObject {
                 color: .red,
                 isAvailable: true
             ),
-            HealthDataTypeInfo(
+            HealthDataTypeViewModel(
                 type: .hrv,
                 title: "Heart Rate Variability",
                 description: "Track stress and recovery",
@@ -52,7 +52,7 @@ class HealthViewModel: ObservableObject {
                 color: .purple,
                 isAvailable: true
             ),
-            HealthDataTypeInfo(
+            HealthDataTypeViewModel(
                 type: .steps,
                 title: "Steps",
                 description: "Count your daily activity",
@@ -60,7 +60,7 @@ class HealthViewModel: ObservableObject {
                 color: .green,
                 isAvailable: true
             ),
-            HealthDataTypeInfo(
+            HealthDataTypeViewModel(
                 type: .sleep,
                 title: "Sleep",
                 description: "Analyze your rest patterns",
@@ -68,7 +68,7 @@ class HealthViewModel: ObservableObject {
                 color: .blue,
                 isAvailable: true
             ),
-            HealthDataTypeInfo(
+            HealthDataTypeViewModel(
                 type: .bloodPressure,
                 title: "Blood Pressure",
                 description: "Track cardiovascular health",
@@ -76,7 +76,7 @@ class HealthViewModel: ObservableObject {
                 color: .orange,
                 isAvailable: true
             ),
-            HealthDataTypeInfo(
+            HealthDataTypeViewModel(
                 type: .calories,
                 title: "Active Calories",
                 description: "Monitor energy burned",
@@ -241,7 +241,7 @@ class HealthViewModel: ObservableObject {
 
 // MARK: - Supporting Types
 
-struct HealthDataTypeInfo: Identifiable {
+struct HealthDataTypeViewModel: Identifiable {
     let id = UUID()
     let type: HealthDataType
     let title: String

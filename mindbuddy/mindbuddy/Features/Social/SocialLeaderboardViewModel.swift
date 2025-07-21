@@ -9,12 +9,12 @@ class SocialLeaderboardViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var currentUserId = ""
     
-    private let authManager: AuthServiceProtocol
+    private let authManager: AuthenticationServiceProtocol
     private var cancellables = Set<AnyCancellable>()
     
-    init(authManager: AuthServiceProtocol = DependencyContainer.shared.authManager) {
+    init(authManager: AuthenticationServiceProtocol = DependencyContainer.shared.authService) {
         self.authManager = authManager
-        self.currentUserId = authManager.currentUser?.uid ?? ""
+        self.currentUserId = authManager.currentUser?.id ?? ""
     }
     
     func loadLeaderboard(timeframe: SocialLeaderboardView.Timeframe, category: SocialLeaderboardView.LeaderboardCategory) {

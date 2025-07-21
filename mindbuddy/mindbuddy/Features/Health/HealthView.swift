@@ -75,7 +75,7 @@ struct HealthView: View {
                                 }
                             } else {
                                 // Not authorized state
-                                EmptyStateView(
+                                HealthEmptyStateView(
                                     icon: "heart.text.square",
                                     title: "Health Access Required",
                                     description: "Grant access to your health data to start earning rewards"
@@ -209,7 +209,7 @@ struct HealthDataTypesSection: View {
 }
 
 struct HealthDataTypeCard: View {
-    let dataTypeInfo: HealthDataTypeInfo
+    let dataTypeInfo: HealthDataTypeViewModel
     let isSelected: Bool
     let action: () -> Void
     
@@ -414,7 +414,7 @@ struct SubmissionResultCard: View {
 
 // MARK: - Supporting Views
 
-struct EmptyStateView: View {
+struct HealthEmptyStateView: View {
     let icon: String
     let title: String
     let description: String

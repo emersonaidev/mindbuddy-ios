@@ -43,7 +43,7 @@ class HealthInsightsViewModel: ObservableObject {
     private let healthManager: HealthServiceProtocol
     private var cancellables = Set<AnyCancellable>()
     
-    init(healthManager: HealthServiceProtocol = DependencyContainer.shared.healthManager) {
+    init(healthManager: HealthServiceProtocol = DependencyContainer.shared.healthService) {
         self.healthManager = healthManager
     }
     
@@ -337,17 +337,19 @@ class HealthInsightsViewModel: ObservableObject {
     
     private func extractDouble(from value: HealthDataValue) -> Double {
         switch value {
-        case .double(let val): return val
-        case .integer(let val): return Double(val)
-        default: return 0
+        case .number(let val):
+            return val
+        default:
+            return 0
         }
     }
     
     private func extractInt(from value: HealthDataValue) -> Int {
         switch value {
-        case .integer(let val): return val
-        case .double(let val): return Int(val)
-        default: return 0
+        case .number(let val):
+            return Int(val)
+        default:
+            return 0
         }
     }
     

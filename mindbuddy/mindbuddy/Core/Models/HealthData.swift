@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 struct HealthData: Codable, Identifiable {
     let id: String
@@ -136,6 +137,48 @@ enum HealthDataType: String, CaseIterable {
             return "Steps"
         case .calories:
             return "Cal"
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .heartRate:
+            return "heart.fill"
+        case .bloodPressure:
+            return "heart.text.square"
+        case .stressLevel:
+            return "brain.head.profile"
+        case .activity:
+            return "figure.walk"
+        case .sleep:
+            return "bed.double.fill"
+        case .hrv:
+            return "waveform.path.ecg"
+        case .steps:
+            return "figure.walk"
+        case .calories:
+            return "flame.fill"
+        }
+    }
+    
+    var color: Color {
+        switch self {
+        case .heartRate:
+            return .red
+        case .bloodPressure:
+            return .orange
+        case .stressLevel:
+            return .purple
+        case .activity:
+            return .green
+        case .sleep:
+            return .blue
+        case .hrv:
+            return .purple
+        case .steps:
+            return .green
+        case .calories:
+            return .orange
         }
     }
 }

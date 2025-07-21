@@ -603,16 +603,16 @@ struct SleepStatsGrid: View {
     let stats: SleepStats
     var body: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
-            StatCard(title: "Avg Duration", value: "\(stats.averageDuration) hrs")
-            StatCard(title: "Deep Sleep", value: "\(stats.deepSleepPercentage)%")
-            StatCard(title: "Sleep Efficiency", value: "\(stats.efficiency)%")
-            StatCard(title: "Consistency", value: "\(stats.consistency)%")
+            InsightStatCard(title: "Avg Duration", value: "\(stats.averageDuration) hrs")
+            InsightStatCard(title: "Deep Sleep", value: "\(stats.deepSleepPercentage)%")
+            InsightStatCard(title: "Sleep Efficiency", value: "\(stats.efficiency)%")
+            InsightStatCard(title: "Consistency", value: "\(stats.consistency)%")
         }
         .padding(.horizontal)
     }
 }
 
-struct StatCard: View {
+struct InsightStatCard: View {
     let title: String
     let value: String
     
