@@ -11,108 +11,246 @@ struct LoginView: View {
     @State private var isAppleLoading = false
     
     var body: some View {
-        NavigationView {
+        ZStack {
+            // Background gradient
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(red: 0.98, green: 0.98, blue: 0.98),
+                    Color(red: 0.95, green: 0.95, blue: 0.95)
+                ]),
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+            
             ScrollView {
-                VStack(spacing: 24) {
+                VStack(spacing: 32) {
+                    // Top spacing
                     Spacer()
+                        .frame(height: 60)
                     
                     // Logo and Title
-                    VStack(spacing: 16) {
-                        Image(systemName: "heart.fill")
-                            .font(.system(size: 60))
-                            .foregroundColor(.red)
-                        
-                        Text("MindBuddy")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                        
-                        Text("Your stress monitoring companion")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
-                    .padding(.bottom, 32)
-                    
-                    // SSO Section (moved to top)
-                    VStack(spacing: 16) {
-                        VStack(spacing: 12) {
-                            SSOButton(
-                                provider: .google,
-                                action: signInWithGoogle,
-                                isLoading: isGoogleLoading
-                            )
+                    VStack(spacing: 20) {
+                        // Logo circle
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [
+                                            Color(red: 0.5, green: 0.4, blue: 1.0),
+                                            Color(red: 0.7, green: 0.5, blue: 1.0)
+                                        ]),
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 80, height: 80)
+                                .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
                             
-                            SSOButton(
-                                provider: .apple,
-                                action: signInWithApple,
-                                isLoading: isAppleLoading
-                            )
+                            Image(systemName: "brain.head.profile")
+                                .font(.system(size: 40))
+                                .foregroundColor(.white)
                         }
                         
-                        HStack {
-                            VStack { Divider() }
-                            Text("OR")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .padding(.horizontal, 8)
-                            VStack { Divider() }
+                        VStack(spacing: 8) {
+                            Text("Welcome Back")
+                                .font(.system(size: 28, weight: .bold))
+                                .foregroundColor(Color(red: 0.05, green: 0.06, blue: 0.1))
+                            
+                            Text("Track your stress. Earn rewards. Own your data.")
+                                .font(.system(size: 16))
+                                .foregroundColor(Color(red: 0.4, green: 0.4, blue: 0.45))
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 40)
                         }
-                        .padding(.vertical, 8)
                     }
-                    .padding(.horizontal, 24)
                     
-                    // Email/Password Login Form (moved to bottom)
-                    VStack(spacing: 16) {
-                        TextField("Email", text: $email)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .textContentType(.emailAddress)
-                            .keyboardType(.emailAddress)
-                            .autocapitalization(.none)
-                        
-                        SecureField("Password", text: $password)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .textContentType(.password)
-                        
-                        if !errorMessage.isEmpty {
-                            Text(errorMessage)
-                                .foregroundColor(.red)
-                                .font(.caption)
+                    // Main content card
+                    VStack(spacing: 24) {
+                        // SSO Buttons
+                        VStack(spacing: 16) {
+                            // Google Sign In
+                            Button(action: signInWithGoogle) {
+                                HStack(spacing: 12) {
+                                    if isGoogleLoading {
+                                        ProgressView()
+                                            .progressViewStyle(CircularProgressViewStyle(tint: .black))
+                                            .scaleEffect(0.8)
+                                    } else {
+                                        Image(systemName: "globe")
+                                            .font(.system(size: 18))
+                                            .foregroundColor(.black)
+                                    }
+                                    
+                                    Text("Continue with Google")
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundColor(.black)
+                                    
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 16)
+                                .background(Color.white)
+                                .cornerRadius(12)
+                                .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 2)
+                            }
+                            .disabled(isGoogleLoading)
+                            
+                            // Apple Sign In
+                            Button(action: signInWithApple) {
+                                HStack(spacing: 12) {
+                                    if isAppleLoading {
+                                        ProgressView()
+                                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                            .scaleEffect(0.8)
+                                    } else {
+                                        Image(systemName: "applelogo")
+                                            .font(.system(size: 18))
+                                            .foregroundColor(.white)
+                                    }
+                                    
+                                    Text("Continue with Apple")
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundColor(.white)
+                                    
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 16)
+                                .background(Color.black)
+                                .cornerRadius(12)
+                                .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 2)
+                            }
+                            .disabled(isAppleLoading)
                         }
                         
-                        Button(action: login) {
+                        // Divider
+                        HStack(spacing: 16) {
+                            Rectangle()
+                                .fill(Color(red: 0.85, green: 0.85, blue: 0.85))
+                                .frame(height: 1)
+                            
+                            Text("OR")
+                                .font(.system(size: 14))
+                                .foregroundColor(Color(red: 0.6, green: 0.6, blue: 0.65))
+                            
+                            Rectangle()
+                                .fill(Color(red: 0.85, green: 0.85, blue: 0.85))
+                                .frame(height: 1)
+                        }
+                        
+                        // Email/Password Form
+                        VStack(spacing: 16) {
+                            // Email field
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Email")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(Color(red: 0.2, green: 0.2, blue: 0.25))
+                                
+                                TextField("Enter your email", text: $email)
+                                    .textFieldStyle(PlainTextFieldStyle())
+                                    .padding(16)
+                                    .background(Color.white)
+                                    .cornerRadius(10)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(Color(red: 0.9, green: 0.9, blue: 0.92), lineWidth: 1)
+                                    )
+                                    .textContentType(.emailAddress)
+                                    .keyboardType(.emailAddress)
+                                    .autocapitalization(.none)
+                            }
+                            
+                            // Password field
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Password")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(Color(red: 0.2, green: 0.2, blue: 0.25))
+                                
+                                SecureField("Enter your password", text: $password)
+                                    .textFieldStyle(PlainTextFieldStyle())
+                                    .padding(16)
+                                    .background(Color.white)
+                                    .cornerRadius(10)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(Color(red: 0.9, green: 0.9, blue: 0.92), lineWidth: 1)
+                                    )
+                                    .textContentType(.password)
+                            }
+                            
+                            // Forgot password link
                             HStack {
-                                if isLoading {
-                                    ProgressView()
-                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                        .scaleEffect(0.8)
-                                } else {
-                                    Text("Login")
-                                        .fontWeight(.semibold)
+                                Spacer()
+                                Button(action: {}) {
+                                    Text("Forgot password?")
+                                        .font(.system(size: 14))
+                                        .foregroundColor(Color(red: 0.5, green: 0.4, blue: 1.0))
                                 }
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
+                            .padding(.top, -8)
+                            
+                            // Error message
+                            if !errorMessage.isEmpty {
+                                Text(errorMessage)
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.red)
+                                    .multilineTextAlignment(.center)
+                            }
+                            
+                            // Sign in button
+                            Button(action: login) {
+                                HStack {
+                                    if isLoading {
+                                        ProgressView()
+                                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                            .scaleEffect(0.8)
+                                    } else {
+                                        Text("Sign In")
+                                            .font(.system(size: 16, weight: .semibold))
+                                    }
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [
+                                            Color(red: 0.5, green: 0.4, blue: 1.0),
+                                            Color(red: 0.7, green: 0.5, blue: 1.0)
+                                        ]),
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .foregroundColor(.white)
+                                .cornerRadius(12)
+                                .shadow(color: Color(red: 0.5, green: 0.4, blue: 1.0).opacity(0.3), radius: 8, x: 0, y: 4)
+                            }
+                            .disabled(isLoading || email.isEmpty || password.isEmpty)
                         }
-                        .disabled(isLoading || email.isEmpty || password.isEmpty)
                     }
                     .padding(.horizontal, 24)
                     
                     // Register Link
-                    Button(action: { showingRegister = true }) {
-                        Text("Don't have an account? Sign up")
-                            .foregroundColor(.blue)
+                    HStack(spacing: 4) {
+                        Text("Don't have an account?")
+                            .font(.system(size: 16))
+                            .foregroundColor(Color(red: 0.4, green: 0.4, blue: 0.45))
+                        
+                        Button(action: { showingRegister = true }) {
+                            Text("Sign up")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(Color(red: 0.5, green: 0.4, blue: 1.0))
+                        }
                     }
-                    .padding(.top, 16)
+                    .padding(.top, 8)
                     
+                    // Bottom spacing
                     Spacer()
+                        .frame(height: 40)
                 }
-                .padding()
+                .padding(.horizontal, 20)
             }
-            .navigationTitle("Welcome Back")
-            .navigationBarTitleDisplayMode(.inline)
         }
         .sheet(isPresented: $showingRegister) {
             RegisterView()
