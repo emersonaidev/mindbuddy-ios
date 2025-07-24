@@ -15,22 +15,23 @@ struct RegisterView: View {
     @State private var lastName = ""
     @State private var isLoading = false
     @State private var errorMessage = ""
+    @FocusState private var focusedField: Field?
+    
+    enum Field {
+        case firstName, lastName, email, password, confirmPassword
+    }
     
     var body: some View {
         NavigationView {
             ZStack {
-                // Background gradient
-                LinearGradient(
-                    gradient: Gradient(colors: [
-                        Color(red: 0.98, green: 0.98, blue: 0.98),
-                        Color(red: 0.95, green: 0.95, blue: 0.95)
-                    ]),
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
+                // Background color from design
+                Color(hex: "#FAFAFA")
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        focusedField = nil
+                    }
                 
-                ScrollView {
+                ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 32) {
                         // Top spacing
                         Spacer()
@@ -38,21 +39,15 @@ struct RegisterView: View {
                         
                         // Header
                         VStack(spacing: 20) {
-                            // Logo circle
+                            // Logo from design
                             ZStack {
-                                Circle()
-                                    .fill(
-                                        LinearGradient(
-                                            gradient: Gradient(colors: [
-                                                Color(red: 0.5, green: 0.4, blue: 1.0),
-                                                Color(red: 0.7, green: 0.5, blue: 1.0)
-                                            ]),
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
-                                    .frame(width: 80, height: 80)
-                                    .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
+                                RoundedRectangle(cornerRadius: 19.35)
+                                    .fill(Color(hex: "#682960"))
+                                    .frame(width: 72, height: 72)
+                                
+                                RoundedRectangle(cornerRadius: 24.94)
+                                    .stroke(Color(hex: "#EBEBEB").opacity(0.5), lineWidth: 11.18)
+                                    .frame(width: 83.34, height: 83.34)
                                 
                                 Image(systemName: "person.badge.plus")
                                     .font(.system(size: 36))
@@ -62,11 +57,11 @@ struct RegisterView: View {
                             VStack(spacing: 8) {
                                 Text("Create Account")
                                     .font(.system(size: 28, weight: .bold))
-                                    .foregroundColor(Color(red: 0.05, green: 0.06, blue: 0.1))
+                                    .foregroundColor(Color(hex: "#050F19"))
                                 
                                 Text("Join MindBuddy and start earning rewards")
                                     .font(.system(size: 16))
-                                    .foregroundColor(Color(red: 0.4, green: 0.4, blue: 0.45))
+                                    .foregroundColor(Color(hex: "#666666"))
                                     .multilineTextAlignment(.center)
                                     .padding(.horizontal, 40)
                             }
@@ -79,35 +74,37 @@ struct RegisterView: View {
                                 VStack(alignment: .leading, spacing: 8) {
                                     Text("First Name")
                                         .font(.system(size: 14, weight: .medium))
-                                        .foregroundColor(Color(red: 0.2, green: 0.2, blue: 0.25))
+                                        .foregroundColor(Color(hex: "#333333"))
                                     
                                     TextField("First", text: $firstName)
                                         .textFieldStyle(PlainTextFieldStyle())
                                         .padding(16)
-                                        .background(Color.white)
-                                        .cornerRadius(10)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 10)
-                                                .stroke(Color(red: 0.9, green: 0.9, blue: 0.92), lineWidth: 1)
-                                        )
+                                        .background(Color(hex: "#EEF0F4"))
+                                        .cornerRadius(28.5)
                                         .textContentType(.givenName)
+                                        .focused($focusedField, equals: .firstName)
+                                        .submitLabel(.next)
+                                        .onSubmit {
+                                            focusedField = .lastName
+                                        }
                                 }
                                 
                                 VStack(alignment: .leading, spacing: 8) {
                                     Text("Last Name")
                                         .font(.system(size: 14, weight: .medium))
-                                        .foregroundColor(Color(red: 0.2, green: 0.2, blue: 0.25))
+                                        .foregroundColor(Color(hex: "#333333"))
                                     
                                     TextField("Last", text: $lastName)
                                         .textFieldStyle(PlainTextFieldStyle())
                                         .padding(16)
-                                        .background(Color.white)
-                                        .cornerRadius(10)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 10)
-                                                .stroke(Color(red: 0.9, green: 0.9, blue: 0.92), lineWidth: 1)
-                                        )
+                                        .background(Color(hex: "#EEF0F4"))
+                                        .cornerRadius(28.5)
                                         .textContentType(.familyName)
+                                        .focused($focusedField, equals: .lastName)
+                                        .submitLabel(.next)
+                                        .onSubmit {
+                                            focusedField = .email
+                                        }
                                 }
                             }
                             
@@ -129,6 +126,11 @@ struct RegisterView: View {
                                     .textContentType(.emailAddress)
                                     .keyboardType(.emailAddress)
                                     .autocapitalization(.none)
+                                    .focused($focusedField, equals: .email)
+                                    .submitLabel(.next)
+                                    .onSubmit {
+                                        focusedField = .password
+                                    }
                             }
                             
                             // Password field
@@ -147,6 +149,11 @@ struct RegisterView: View {
                                             .stroke(Color(red: 0.9, green: 0.9, blue: 0.92), lineWidth: 1)
                                     )
                                     .textContentType(.newPassword)
+                                    .focused($focusedField, equals: .password)
+                                    .submitLabel(.next)
+                                    .onSubmit {
+                                        focusedField = .confirmPassword
+                                    }
                             }
                             
                             // Confirm Password field
@@ -165,6 +172,13 @@ struct RegisterView: View {
                                             .stroke(Color(red: 0.9, green: 0.9, blue: 0.92), lineWidth: 1)
                                     )
                                     .textContentType(.newPassword)
+                                    .focused($focusedField, equals: .confirmPassword)
+                                    .submitLabel(.done)
+                                    .onSubmit {
+                                        if isFormValid {
+                                            register()
+                                        }
+                                    }
                             }
                             
                             // Password Requirements (compact)
@@ -228,21 +242,12 @@ struct RegisterView: View {
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 16)
-                                .background(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [
-                                            Color(red: 0.5, green: 0.4, blue: 1.0),
-                                            Color(red: 0.7, green: 0.5, blue: 1.0)
-                                        ]),
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
+                                .background(Color(hex: "#682960"))
                                 .foregroundColor(.white)
-                                .cornerRadius(12)
-                                .shadow(color: Color(red: 0.5, green: 0.4, blue: 1.0).opacity(0.3), radius: 8, x: 0, y: 4)
+                                .cornerRadius(28.5)
                             }
                             .disabled(isLoading || !isFormValid)
+                            .opacity((isLoading || !isFormValid) ? 0.6 : 1.0)
                             .padding(.top, 8)
                         }
                         .padding(.horizontal, 24)
@@ -253,6 +258,8 @@ struct RegisterView: View {
                     }
                     .padding(.horizontal, 20)
                 }
+                .scrollDismissesKeyboard(.interactively)
+                .ignoresSafeArea(.keyboard, edges: .bottom)
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -260,7 +267,7 @@ struct RegisterView: View {
                     Button(action: { dismiss() }) {
                         Image(systemName: "xmark")
                             .font(.system(size: 16))
-                            .foregroundColor(Color(red: 0.4, green: 0.4, blue: 0.45))
+                            .foregroundColor(Color(hex: "#666666"))
                             .padding(8)
                             .background(Color.white)
                             .clipShape(Circle())
@@ -318,7 +325,7 @@ struct PasswordRequirement: View {
         HStack(spacing: 6) {
             Image(systemName: icon)
                 .font(.system(size: 12))
-                .foregroundColor(isMet ? Color(red: 0.2, green: 0.7, blue: 0.3) : Color(red: 0.7, green: 0.7, blue: 0.75))
+                .foregroundColor(isMet ? Color(hex: "#33B55A") : Color(hex: "#B2B2BF"))
             
             Text(text)
                 .font(.system(size: 12))

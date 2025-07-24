@@ -24,14 +24,8 @@ struct ContentView: View {
                     .transition(.opacity)
             }
         }
-        .animation(.easeInOut(duration: 0.5), value: hasCompletedOnboarding)
-        .animation(.easeInOut(duration: 0.5), value: authManager.isAuthenticated)
-        .onAppear {
-            // Check if user is already authenticated
-            if authManager.getAccessToken() != nil {
-                // Could add token validation here
-            }
-        }
+        .animation(.easeInOut(duration: 0.3), value: hasCompletedOnboarding)
+        .animation(.easeInOut(duration: 0.3), value: authManager.isAuthenticated)
     }
 }
 

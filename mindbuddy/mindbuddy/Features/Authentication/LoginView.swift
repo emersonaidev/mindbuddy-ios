@@ -9,21 +9,22 @@ struct LoginView: View {
     @State private var showingRegister = false
     @State private var isGoogleLoading = false
     @State private var isAppleLoading = false
+    @FocusState private var focusedField: Field?
+    
+    enum Field {
+        case email, password
+    }
     
     var body: some View {
         ZStack {
-            // Background gradient
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color(red: 0.98, green: 0.98, blue: 0.98),
-                    Color(red: 0.95, green: 0.95, blue: 0.95)
-                ]),
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
+            // Background color from design
+            Color(hex: "#FAFAFA")
+                .ignoresSafeArea()
+                .onTapGesture {
+                    focusedField = nil
+                }
             
-            ScrollView {
+            ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 32) {
                     // Top spacing
                     Spacer()
@@ -31,35 +32,29 @@ struct LoginView: View {
                     
                     // Logo and Title
                     VStack(spacing: 20) {
-                        // Logo circle
+                        // Logo from design
                         ZStack {
-                            Circle()
-                                .fill(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [
-                                            Color(red: 0.5, green: 0.4, blue: 1.0),
-                                            Color(red: 0.7, green: 0.5, blue: 1.0)
-                                        ]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .frame(width: 80, height: 80)
-                                .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
+                            RoundedRectangle(cornerRadius: 19.35)
+                                .fill(Color(hex: "#682960"))
+                                .frame(width: 72, height: 72)
+                            
+                            RoundedRectangle(cornerRadius: 24.94)
+                                .stroke(Color(hex: "#EBEBEB").opacity(0.5), lineWidth: 11.18)
+                                .frame(width: 83.34, height: 83.34)
                             
                             Image(systemName: "brain.head.profile")
-                                .font(.system(size: 40))
+                                .font(.system(size: 36))
                                 .foregroundColor(.white)
                         }
                         
                         VStack(spacing: 8) {
                             Text("Welcome Back")
                                 .font(.system(size: 28, weight: .bold))
-                                .foregroundColor(Color(red: 0.05, green: 0.06, blue: 0.1))
+                                .foregroundColor(Color(hex: "#050F19"))
                             
                             Text("Track your stress. Earn rewards. Own your data.")
                                 .font(.system(size: 16))
-                                .foregroundColor(Color(red: 0.4, green: 0.4, blue: 0.45))
+                                .foregroundColor(Color(hex: "#666666"))
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal, 40)
                         }
@@ -92,7 +87,10 @@ struct LoginView: View {
                                 .padding(.vertical, 16)
                                 .background(Color.white)
                                 .cornerRadius(12)
-                                .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 2)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color(hex: "#E5E5E7"), lineWidth: 1)
+                                )
                             }
                             .disabled(isGoogleLoading)
                             
@@ -119,7 +117,10 @@ struct LoginView: View {
                                 .padding(.vertical, 16)
                                 .background(Color.black)
                                 .cornerRadius(12)
-                                .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 2)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color(hex: "#E5E5E7"), lineWidth: 1)
+                                )
                             }
                             .disabled(isAppleLoading)
                         }
@@ -127,15 +128,15 @@ struct LoginView: View {
                         // Divider
                         HStack(spacing: 16) {
                             Rectangle()
-                                .fill(Color(red: 0.85, green: 0.85, blue: 0.85))
+                                .fill(Color(hex: "#E5E5E7"))
                                 .frame(height: 1)
                             
                             Text("OR")
                                 .font(.system(size: 14))
-                                .foregroundColor(Color(red: 0.6, green: 0.6, blue: 0.65))
+                                .foregroundColor(Color(hex: "#999999"))
                             
                             Rectangle()
-                                .fill(Color(red: 0.85, green: 0.85, blue: 0.85))
+                                .fill(Color(hex: "#E5E5E7"))
                                 .frame(height: 1)
                         }
                         
@@ -145,38 +146,42 @@ struct LoginView: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Email")
                                     .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(Color(red: 0.2, green: 0.2, blue: 0.25))
+                                    .foregroundColor(Color(hex: "#333333"))
                                 
                                 TextField("Enter your email", text: $email)
                                     .textFieldStyle(PlainTextFieldStyle())
                                     .padding(16)
-                                    .background(Color.white)
-                                    .cornerRadius(10)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .stroke(Color(red: 0.9, green: 0.9, blue: 0.92), lineWidth: 1)
-                                    )
+                                    .background(Color(hex: "#EEF0F4"))
+                                    .cornerRadius(28.5)
                                     .textContentType(.emailAddress)
                                     .keyboardType(.emailAddress)
                                     .autocapitalization(.none)
+                                    .focused($focusedField, equals: .email)
+                                    .submitLabel(.next)
+                                    .onSubmit {
+                                        focusedField = .password
+                                    }
                             }
                             
                             // Password field
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Password")
                                     .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(Color(red: 0.2, green: 0.2, blue: 0.25))
+                                    .foregroundColor(Color(hex: "#333333"))
                                 
                                 SecureField("Enter your password", text: $password)
                                     .textFieldStyle(PlainTextFieldStyle())
                                     .padding(16)
-                                    .background(Color.white)
-                                    .cornerRadius(10)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .stroke(Color(red: 0.9, green: 0.9, blue: 0.92), lineWidth: 1)
-                                    )
+                                    .background(Color(hex: "#EEF0F4"))
+                                    .cornerRadius(28.5)
                                     .textContentType(.password)
+                                    .focused($focusedField, equals: .password)
+                                    .submitLabel(.go)
+                                    .onSubmit {
+                                        if !email.isEmpty && !password.isEmpty {
+                                            login()
+                                        }
+                                    }
                             }
                             
                             // Forgot password link
@@ -185,7 +190,7 @@ struct LoginView: View {
                                 Button(action: {}) {
                                     Text("Forgot password?")
                                         .font(.system(size: 14))
-                                        .foregroundColor(Color(red: 0.5, green: 0.4, blue: 1.0))
+                                        .foregroundColor(Color(hex: "#682960"))
                                 }
                             }
                             .padding(.top, -8)
@@ -212,21 +217,12 @@ struct LoginView: View {
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 16)
-                                .background(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [
-                                            Color(red: 0.5, green: 0.4, blue: 1.0),
-                                            Color(red: 0.7, green: 0.5, blue: 1.0)
-                                        ]),
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
+                                .background(Color(hex: "#682960"))
                                 .foregroundColor(.white)
-                                .cornerRadius(12)
-                                .shadow(color: Color(red: 0.5, green: 0.4, blue: 1.0).opacity(0.3), radius: 8, x: 0, y: 4)
+                                .cornerRadius(28.5)
                             }
                             .disabled(isLoading || email.isEmpty || password.isEmpty)
+                            .opacity((isLoading || email.isEmpty || password.isEmpty) ? 0.6 : 1.0)
                         }
                     }
                     .padding(.horizontal, 24)
@@ -235,12 +231,12 @@ struct LoginView: View {
                     HStack(spacing: 4) {
                         Text("Don't have an account?")
                             .font(.system(size: 16))
-                            .foregroundColor(Color(red: 0.4, green: 0.4, blue: 0.45))
+                            .foregroundColor(Color(hex: "#666666"))
                         
                         Button(action: { showingRegister = true }) {
                             Text("Sign up")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(Color(red: 0.5, green: 0.4, blue: 1.0))
+                                .foregroundColor(Color(hex: "#682960"))
                         }
                     }
                     .padding(.top, 8)
@@ -251,6 +247,8 @@ struct LoginView: View {
                 }
                 .padding(.horizontal, 20)
             }
+            .scrollDismissesKeyboard(.interactively)
+            .ignoresSafeArea(.keyboard, edges: .bottom)
         }
         .sheet(isPresented: $showingRegister) {
             RegisterView()
