@@ -26,3 +26,19 @@ extension Color {
         )
     }
 }
+
+// Design System Colors from the palette
+extension Color {
+    // Slate colors
+    static let slate950 = Color(hex: "#020617")
+    static let slate900 = Color(hex: "#0F172A")
+    static let slate800 = Color(hex: "#1E293B")
+    static let slate500 = Color(hex: "#64748B")
+    static let slate400 = Color(hex: "#94A3B8")
+    static let slate50 = Color(hex: "#F1F5F9")
+    
+    // Brand colors
+    static let magenta600 = Color(hex: "#C026D3")
+    static let purple600 = Color(hex: "#7C3AED")
+    static let indigo600 = Color(hex: "#4F46E5")
+}

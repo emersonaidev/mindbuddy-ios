@@ -8,24 +8,8 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var authManager = AuthManager.shared
-    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
-    
     var body: some View {
-        Group {
-            if !authManager.isAuthenticated {
-                LoginView()
-                    .transition(.opacity)
-            } else if !hasCompletedOnboarding {
-                OnboardingView()
-                    .transition(.move(edge: .trailing))
-            } else {
-                MainTabView()
-                    .transition(.opacity)
-            }
-        }
-        .animation(.easeInOut(duration: 0.3), value: hasCompletedOnboarding)
-        .animation(.easeInOut(duration: 0.3), value: authManager.isAuthenticated)
+        WelcomeView()
     }
 }
 
