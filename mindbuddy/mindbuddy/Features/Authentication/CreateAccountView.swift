@@ -182,15 +182,13 @@ struct CreateAccountView: View {
             }
             .disabled(isCreatingAccount)
             
-            // Apple Sign In - Official Button
-            SignInWithAppleButton(.continue) { request in
-                request.requestedScopes = [.fullName, .email]
-            } onCompletion: { result in
-                handleSignInWithAppleResult(result)
+            // Apple Sign In Button with custom image
+            Button(action: signInWithApple) {
+                Image("apple-signin-button")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(height: 56)
             }
-            .signInWithAppleButtonStyle(.white)
-            .frame(height: 56)
-            .cornerRadius(28)
             .disabled(isCreatingAccount)
         }
     }
@@ -442,16 +440,6 @@ struct CreateAccountView: View {
         }
     }
     
-    private func handleSignInWithAppleResult(_ result: Result<ASAuthorization, Error>) {
-        switch result {
-        case .success(_):
-            // The actual sign in is handled by the authManager
-            signInWithApple()
-        case .failure(let error):
-            generalError = "Failed to sign up with Apple: \(error.localizedDescription)"
-            isCreatingAccount = false
-        }
-    }
     
     private func createAccount() {
         guard isFormValid else { return }

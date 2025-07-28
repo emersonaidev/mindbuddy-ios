@@ -1,5 +1,6 @@
 import SwiftUI
 import AuthenticationServices
+import AuthenticationServices
 
 struct SignInView: View {
     @StateObject private var authManager = AuthManager.shared
@@ -182,25 +183,14 @@ struct SignInView: View {
             .disabled(isSocialSigningIn)
             .accessibilityLabel("Sign in with Google")
             
-            // Apple Sign In
+            // Apple Sign In Button with custom image
             Button(action: signInWithApple) {
-                HStack(spacing: 8) {
-                    Image(systemName: "apple.logo")
-                        .font(.system(size: 20))
-                        .foregroundColor(.white)
-                    
-                    Text("Continue with Apple")
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(.white)
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: 56)
-                .background(Color(red: 0.10, green: 0.10, blue: 0.10))
-                .cornerRadius(28)
-                .mindBuddyCardShadow()
+                Image("apple-signin-button")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(height: 56)
             }
             .disabled(isSocialSigningIn)
-            .accessibilityLabel("Sign in with Apple")
         }
     }
     
