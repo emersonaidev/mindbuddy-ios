@@ -2,13 +2,14 @@ import SwiftUI
 import HealthKit
 
 struct ConnectAppleHealthView: View {
+    let onNext: () -> Void
+    
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var sizeClass
     @State private var isConnecting = false
-    @State private var showCompletion = false
-    
-    // Callback for when user taps connect
-    var onConnectTapped: () async -> Void
+    @State private var showError = false
+    @State private var errorMessage = ""
+    @State private var animateContent = false
     
     // MARK: - Computed Properties
     private var horizontalPadding: CGFloat {
@@ -35,13 +36,20 @@ struct ConnectAppleHealthView: View {
                 ScrollView {
                     VStack(spacing: 16) {
                         healthDataAccessCard
-                        privacyControlCard
+                        privacyControlCard  
                         appleHealthCard
                     }
                     .padding(.horizontal, horizontalPadding)
                     .padding(.vertical, 20)
                     .frame(maxWidth: maxContentWidth)
                 }
+                .opacity(animateContent ? 1 : 0)
+                .offset(y: animateContent ? 0 : 20)
+                .animation(
+                    .spring(response: 0.5, dampingFraction: 0.8)
+                    .delay(0.1),
+                    value: animateContent
+                )
                 
                 Spacer()
                 
@@ -55,17 +63,13 @@ struct ConnectAppleHealthView: View {
         }
         .ignoresSafeArea()
         .preferredColorScheme(.dark)
-        .navigationDestination(isPresented: $showCompletion) {
-            OnboardingCompletionView(
-                onConnectHealthTapped: {
-                    // User wants to connect again
-                    showCompletion = false
-                },
-                onSkipTapped: {
-                    // Complete onboarding
-                    dismiss()
-                }
-            )
+        .onAppear {
+            animateContent = true
+        }
+        .alert("Error", isPresented: $showError) {
+            Button("OK") { }
+        } message: {
+            Text(errorMessage)
         }
     }
     
@@ -118,6 +122,12 @@ struct ConnectAppleHealthView: View {
                 .foregroundColor(Color.MindBuddy.textPrimary)
                 .multilineTextAlignment(.center)
                 .accessibilityAddTraits(.isHeader)
+                .opacity(animateContent ? 1 : 0)
+                .offset(y: animateContent ? 0 : 20)
+                .animation(
+                    .spring(response: 0.5, dampingFraction: 0.8),
+                    value: animateContent
+                )
         }
     }
     
@@ -127,7 +137,7 @@ struct ConnectAppleHealthView: View {
             icon: "heart.text.square.fill",
             iconColor: Color.MindBuddy.primaryAccent,
             title: "Health Data Access",
-            description: "We need permission to read your health and phone data via Apple Health or your device."
+            description: "Connect to your health data from Apple Watch, iPhone, and other devices through Apple Health."
         )
         .accessibilityElement(children: .combine)
     }
@@ -146,8 +156,8 @@ struct ConnectAppleHealthView: View {
         InfoCard(
             icon: "heart.fill",
             iconColor: .red,
-            title: "Apple Health",
-            description: "Connect to sync your health metrics."
+            title: "Comprehensive Data",
+            description: "Track HRV, heart rate, steps, sleep, and mindfulness data for complete wellness insights."
         )
         .accessibilityElement(children: .combine)
     }
@@ -155,14 +165,7 @@ struct ConnectAppleHealthView: View {
     // MARK: - Bottom Section
     private var bottomSection: some View {
         VStack(spacing: 16) {
-            Button(action: {
-                Task {
-                    isConnecting = true
-                    await onConnectTapped()
-                    isConnecting = false
-                    showCompletion = true
-                }
-            }) {
+            Button(action: connectToHealthKit) {
                 HStack {
                     if isConnecting {
                         ProgressView()
@@ -183,12 +186,46 @@ struct ConnectAppleHealthView: View {
             .disabled(isConnecting)
             .accessibilityLabel("Connect to Apple Health")
             .accessibilityHint("Tap to request permission to access your health data")
+            .opacity(animateContent ? 1 : 0)
+            .offset(y: animateContent ? 0 : 20)
+            .animation(
+                .spring(response: 0.5, dampingFraction: 0.8)
+                .delay(0.4),
+                value: animateContent
+            )
             
             Text("You can customise what you share in the next step.")
                 .font(.system(size: 12))
                 .foregroundColor(Color.MindBuddy.textSecondary)
                 .multilineTextAlignment(.center)
                 .accessibilityLabel("You can customize what you share in the next step")
+                .opacity(animateContent ? 1 : 0)
+                .animation(
+                    .spring(response: 0.5, dampingFraction: 0.8)
+                    .delay(0.5),
+                    value: animateContent
+                )
+        }
+    }
+    
+    // MARK: - Actions
+    private func connectToHealthKit() {
+        isConnecting = true
+        
+        Task {
+            do {
+                try await HealthManager.shared.requestHealthKitPermissions()
+                await MainActor.run {
+                    isConnecting = false
+                    onNext()
+                }
+            } catch {
+                await MainActor.run {
+                    isConnecting = false
+                    errorMessage = error.localizedDescription
+                    showError = true
+                }
+            }
         }
     }
 }
@@ -279,16 +316,15 @@ struct ConnectAppleHealthView_Previews: PreviewProvider {
     static var previews: some View {
         Group {
             ConnectAppleHealthView(
-                onConnectTapped: {
+                onNext: {
                     // Preview action
-                    try? await Task.sleep(nanoseconds: 2_000_000_000)
                 }
             )
             .previewDisplayName("iPhone 15 Pro")
             
             ConnectAppleHealthView(
-                onConnectTapped: {
-                    try? await Task.sleep(nanoseconds: 2_000_000_000)
+                onNext: {
+                    // Preview action
                 }
             )
             .previewDevice("iPhone SE (3rd generation)")

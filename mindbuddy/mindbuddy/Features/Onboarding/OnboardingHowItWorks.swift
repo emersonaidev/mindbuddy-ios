@@ -6,7 +6,6 @@ struct OnboardingHowItWorks: View {
     @Environment(\.horizontalSizeClass) private var sizeClass
     @State private var selectedStep: Int? = nil
     @State private var animateSteps = false
-    @State private var showHealthConnect = false
     
     // Callback for next button
     var onNext: () -> Void = {}
@@ -100,21 +99,6 @@ struct OnboardingHowItWorks: View {
         .onAppear {
             animateSteps = true
         }
-        .navigationDestination(isPresented: $showHealthConnect) {
-            ConnectAppleHealthView(
-                onConnectTapped: {
-                    // Request HealthKit authorization
-                    do {
-                        try await HealthManager.shared.requestHealthKitPermissions()
-                        await MainActor.run {
-                            onNext()
-                        }
-                    } catch {
-                        print("Error requesting health permissions: \(error)")
-                    }
-                }
-            )
-        }
     }
     
     // MARK: - Subviews
@@ -181,9 +165,7 @@ struct OnboardingHowItWorks: View {
     }
     
     private var nextButton: some View {
-        Button(action: {
-            showHealthConnect = true
-        }) {
+        Button(action: onNext) {
             HStack {
                 Text("Next")
                     .font(.system(size: 16, weight: .semibold))

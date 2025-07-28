@@ -1,15 +1,13 @@
 import SwiftUI
 
 struct OnboardingCompletionView: View {
+    let onContinue: () -> Void
+    
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var sizeClass
     @State private var showSuccessAnimation = false
     @State private var iconScale: CGFloat = 0.8
     @State private var iconOpacity: Double = 0
-    
-    // Callbacks for button actions
-    var onConnectHealthTapped: () -> Void
-    var onSkipTapped: () -> Void
     
     // MARK: - Computed Properties
     private var horizontalPadding: CGFloat {
@@ -42,7 +40,7 @@ struct OnboardingCompletionView: View {
                     .padding(.bottom, 16)
                 
                 // Subtitle
-                Text("Your account has been created successfully.\nLet's get started by connecting your health data.")
+                Text("Great! We can now track your wellness data.\nLet's create your account to start earning rewards.")
                     .font(.system(size: 14))
                     .lineHeight(20)
                     .foregroundColor(Color.MindBuddy.textSecondary)
@@ -121,31 +119,18 @@ struct OnboardingCompletionView: View {
     
     // MARK: - Action Buttons
     private var actionButtons: some View {
-        VStack(spacing: 16) {
-            // Connect Apple Health Button
-            Button(action: onConnectHealthTapped) {
-                Text("Connect Apple Health")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 56)
-                    .background(Color(red: 0.12, green: 0.12, blue: 0.12))
-                    .cornerRadius(28)
-                    .mindBuddyButtonShadow()
-            }
-            .accessibilityLabel("Connect Apple Health")
-            .accessibilityHint("Tap to connect your health data")
-            
-            // Skip Button
-            Button(action: onSkipTapped) {
-                Text("Skip for now")
-                    .font(.system(size: 14))
-                    .foregroundColor(Color.MindBuddy.textSecondary)
-                    .frame(height: 44)
-            }
-            .accessibilityLabel("Skip for now")
-            .accessibilityHint("Tap to skip connecting health data")
+        Button(action: onContinue) {
+            Text("Continue")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 56)
+                .background(Color.black)
+                .cornerRadius(28)
+                .mindBuddyButtonShadow()
         }
+        .accessibilityLabel("Continue")
+        .accessibilityHint("Tap to create your account")
     }
     
     // MARK: - Animations
@@ -177,32 +162,23 @@ struct OnboardingCompletionView_Previews: PreviewProvider {
     static var previews: some View {
         Group {
             OnboardingCompletionView(
-                onConnectHealthTapped: {
-                    print("Connect Health tapped")
-                },
-                onSkipTapped: {
-                    print("Skip tapped")
+                onContinue: {
+                    print("Continue tapped")
                 }
             )
             .previewDisplayName("iPhone 15 Pro")
             
             OnboardingCompletionView(
-                onConnectHealthTapped: {
-                    print("Connect Health tapped")
-                },
-                onSkipTapped: {
-                    print("Skip tapped")
+                onContinue: {
+                    print("Continue tapped")
                 }
             )
             .previewDevice("iPhone SE (3rd generation)")
             .previewDisplayName("iPhone SE")
             
             OnboardingCompletionView(
-                onConnectHealthTapped: {
-                    print("Connect Health tapped")
-                },
-                onSkipTapped: {
-                    print("Skip tapped")
+                onContinue: {
+                    print("Continue tapped")
                 }
             )
             .previewDevice("iPad Pro (12.9-inch) (6th generation)")

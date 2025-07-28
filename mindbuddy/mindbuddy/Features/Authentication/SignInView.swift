@@ -1,28 +1,34 @@
 import SwiftUI
+import AuthenticationServices
 
-struct CreateAccountView: View {
+struct SignInView: View {
     @StateObject private var authManager = AuthManager.shared
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var sizeClass
     
     // Form State
-    @State private var fullName = ""
     @State private var email = ""
     @State private var password = ""
     @State private var isPasswordVisible = false
-    @State private var agreedToTerms = false
     
     // Validation State
-    @State private var fullNameError: String?
     @State private var emailError: String?
     @State private var passwordError: String?
     @State private var generalError: String?
     
     // UI State
-    @State private var isCreatingAccount = false
-    @State private var showingTerms = false
-    @State private var showingPrivacy = false
+    @State private var isSigningIn = false
+    @State private var isSocialSigningIn = false
+    @State private var showingForgotPassword = false
+    @State private var showingPasswordResetAlert = false
+    @State private var passwordResetMessage = ""
     @State private var keyboardHeight: CGFloat = 0
+    @FocusState private var focusedField: Field?
+    
+    enum Field {
+        case email
+        case password
+    }
     
     // MARK: - Computed Properties
     private var horizontalPadding: CGFloat {
@@ -33,27 +39,11 @@ struct CreateAccountView: View {
         sizeClass == .compact ? .infinity : 600
     }
     
-    private var firstName: String {
-        fullName.components(separatedBy: " ").first ?? ""
-    }
-    
-    private var lastName: String {
-        let components = fullName.components(separatedBy: " ")
-        return components.count > 1 ? components.dropFirst().joined(separator: " ") : ""
-    }
-    
     private var isFormValid: Bool {
-        !fullName.isEmpty && 
         !email.isEmpty && 
         !password.isEmpty && 
-        agreedToTerms &&
-        fullNameError == nil &&
         emailError == nil &&
         passwordError == nil
-    }
-    
-    private var passwordStrength: PasswordStrength {
-        ValidationUtilities.passwordStrength(password)
     }
     
     var body: some View {
@@ -79,16 +69,16 @@ struct CreateAccountView: View {
                     formSection
                         .padding(.top, 32)
                     
-                    // Terms Agreement
-                    termsSection
-                        .padding(.top, 24)
+                    // Forgot Password
+                    forgotPasswordButton
+                        .padding(.top, 16)
                     
-                    // Create Account Button
-                    createAccountButton
+                    // Sign In Button
+                    signInButton
                         .padding(.top, 40)
                     
-                    // Sign In Link
-                    signInLink
+                    // Sign Up Link
+                    signUpLink
                         .padding(.top, 24)
                         .padding(.bottom, max(40, keyboardHeight))
                 }
@@ -100,18 +90,20 @@ struct CreateAccountView: View {
         .ignoresSafeArea()
         .preferredColorScheme(.dark)
         .navigationBarHidden(true)
-        .sheet(isPresented: $showingTerms) {
-            TermsOfServiceView()
+        .alert("Password Reset", isPresented: $showingPasswordResetAlert) {
+            Button("OK") { }
+        } message: {
+            Text(passwordResetMessage)
         }
-        .sheet(isPresented: $showingPrivacy) {
-            PrivacyPolicyView()
-        }
-        .alert("Error", isPresented: .constant(generalError != nil)) {
+        .alert("Sign In Error", isPresented: .constant(generalError != nil)) {
             Button("OK") {
                 generalError = nil
             }
         } message: {
             Text(generalError ?? "An error occurred")
+        }
+        .sheet(isPresented: $showingForgotPassword) {
+            ForgotPasswordView()
         }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { notification in
             if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
@@ -153,7 +145,7 @@ struct CreateAccountView: View {
     
     // MARK: - View Components
     private var headerSection: some View {
-        Text("Create Account")
+        Text("Sign In")
             .font(.system(size: 30, weight: .semibold))
             .foregroundColor(Color.MindBuddy.textPrimary)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -187,8 +179,8 @@ struct CreateAccountView: View {
                 .cornerRadius(28)
                 .mindBuddyCardShadow()
             }
-            .disabled(isCreatingAccount)
-            .accessibilityLabel("Sign up with Google")
+            .disabled(isSocialSigningIn)
+            .accessibilityLabel("Sign in with Google")
             
             // Apple Sign In
             Button(action: signInWithApple) {
@@ -207,8 +199,8 @@ struct CreateAccountView: View {
                 .cornerRadius(28)
                 .mindBuddyCardShadow()
             }
-            .disabled(isCreatingAccount)
-            .accessibilityLabel("Sign up with Apple")
+            .disabled(isSocialSigningIn)
+            .accessibilityLabel("Sign in with Apple")
         }
     }
     
@@ -218,7 +210,7 @@ struct CreateAccountView: View {
                 .fill(Color.white.opacity(0.1))
                 .frame(height: 1)
             
-            Text("or create with email")
+            Text("or continue with")
                 .font(.system(size: 12))
                 .foregroundColor(Color.MindBuddy.textSecondary)
                 .fixedSize()
@@ -231,29 +223,6 @@ struct CreateAccountView: View {
     
     private var formSection: some View {
         VStack(spacing: 24) {
-            // Full Name Field
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Full Name")
-                    .font(.system(size: 14))
-                    .foregroundColor(Color.MindBuddy.textPrimary)
-                
-                TextField("Enter your full name", text: $fullName)
-                    .textFieldStyle(MindBuddyTextFieldStyle())
-                    .textContentType(.name)
-                    .autocapitalization(.words)
-                    .onChange(of: fullName) { _ in
-                        validateFullName()
-                    }
-                    .accessibilityLabel("Full name input field")
-                
-                if let error = fullNameError {
-                    Text(error)
-                        .font(.system(size: 12))
-                        .foregroundColor(Color.MindBuddy.error)
-                        .transition(.opacity)
-                }
-            }
-            
             // Email Field
             VStack(alignment: .leading, spacing: 8) {
                 Text("Email")
@@ -265,8 +234,13 @@ struct CreateAccountView: View {
                     .textContentType(.emailAddress)
                     .keyboardType(.emailAddress)
                     .autocapitalization(.none)
+                    .disableAutocorrection(true)
+                    .focused($focusedField, equals: .email)
                     .onChange(of: email) { _ in
                         validateEmail()
+                    }
+                    .onSubmit {
+                        focusedField = .password
                     }
                     .accessibilityLabel("Email input field")
                 
@@ -286,13 +260,15 @@ struct CreateAccountView: View {
                 
                 HStack {
                     if isPasswordVisible {
-                        TextField("Create a password", text: $password)
+                        TextField("Enter your password", text: $password)
                             .textFieldStyle(MindBuddyTextFieldStyle(showBackground: false))
-                            .textContentType(.newPassword)
+                            .textContentType(.password)
+                            .focused($focusedField, equals: .password)
                     } else {
-                        SecureField("Create a password", text: $password)
+                        SecureField("Enter your password", text: $password)
                             .textFieldStyle(MindBuddyTextFieldStyle(showBackground: false))
-                            .textContentType(.newPassword)
+                            .textContentType(.password)
+                            .focused($focusedField, equals: .password)
                     }
                     
                     Button(action: {
@@ -315,10 +291,8 @@ struct CreateAccountView: View {
                 .onChange(of: password) { _ in
                     validatePassword()
                 }
-                
-                if !password.isEmpty {
-                    PasswordStrengthIndicator(strength: passwordStrength)
-                        .transition(.opacity)
+                .onSubmit {
+                    signIn()
                 }
                 
                 if let error = passwordError {
@@ -331,66 +305,28 @@ struct CreateAccountView: View {
         }
     }
     
-    private var termsSection: some View {
-        HStack(alignment: .top, spacing: 12) {
+    private var forgotPasswordButton: some View {
+        HStack {
+            Spacer()
             Button(action: {
-                agreedToTerms.toggle()
+                showingForgotPassword = true
             }) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.MindBuddy.cardBackground)
-                        .frame(width: 20, height: 20)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 4)
-                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                        )
-                    
-                    if agreedToTerms {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(Color.MindBuddy.textPrimary)
-                            .transition(.scale)
-                    }
-                }
-            }
-            .accessibilityLabel("Terms agreement checkbox")
-            .accessibilityAddTraits(agreedToTerms ? [.isSelected] : [])
-            
-            HStack(spacing: 0) {
-                Text("I agree to the ")
-                    .font(.system(size: 14))
-                    .foregroundColor(Color(red: 0.40, green: 0.40, blue: 0.40))
-                
-                Button(action: { showingTerms = true }) {
-                    Text("Terms of Service")
-                        .font(.system(size: 14))
-                        .foregroundColor(Color.MindBuddy.primaryAccent)
-                        .underline()
-                }
-                
-                Text(" and ")
-                    .font(.system(size: 14))
-                    .foregroundColor(Color(red: 0.40, green: 0.40, blue: 0.40))
-                
-                Button(action: { showingPrivacy = true }) {
-                    Text("Privacy Policy")
-                        .font(.system(size: 14))
-                        .foregroundColor(Color.MindBuddy.primaryAccent)
-                        .underline()
-                }
+                Text("Forgot password?")
+                    .font(.system(size: 12))
+                    .foregroundColor(Color.MindBuddy.textSecondary)
             }
         }
     }
     
-    private var createAccountButton: some View {
-        Button(action: createAccount) {
+    private var signInButton: some View {
+        Button(action: signIn) {
             HStack {
-                if isCreatingAccount {
+                if isSigningIn {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         .scaleEffect(0.8)
                 } else {
-                    Text("Create Account")
+                    Text("Sign In")
                         .font(.system(size: 16, weight: .semibold))
                 }
             }
@@ -398,225 +334,245 @@ struct CreateAccountView: View {
             .frame(maxWidth: .infinity)
             .frame(height: 56)
             .background(
-                isFormValid && !isCreatingAccount ? 
+                isFormValid && !isSigningIn ? 
                 Color.black : 
                 Color.black.opacity(0.5)
             )
             .cornerRadius(28)
             .mindBuddyButtonShadow()
         }
-        .disabled(!isFormValid || isCreatingAccount)
-        .accessibilityLabel("Create account button")
-        .accessibilityHint(isFormValid ? "Double tap to create your account" : "Fill in all fields and agree to terms to enable")
+        .disabled(!isFormValid || isSigningIn)
+        .accessibilityLabel("Sign in button")
+        .accessibilityHint(isFormValid ? "Double tap to sign in" : "Fill in all fields to enable")
     }
     
-    private var signInLink: some View {
+    private var signUpLink: some View {
         HStack(spacing: 4) {
-            Text("Already have an account?")
+            Text("Don't have an account?")
                 .font(.system(size: 14))
                 .foregroundColor(Color.MindBuddy.textSecondary)
             
-            NavigationLink(destination: SignInView()) {
-                Text("Sign In")
+            NavigationLink(destination: CreateAccountView()) {
+                Text("Sign Up")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(Color.MindBuddy.textSecondary)
+                    .foregroundColor(Color.MindBuddy.textPrimary)
             }
         }
     }
     
     // MARK: - Actions
+    private func signIn() {
+        guard isFormValid else { return }
+        
+        isSigningIn = true
+        generalError = nil
+        focusedField = nil
+        
+        Task {
+            do {
+                _ = try await authManager.login(email: email, password: password)
+                
+                // Navigation will be handled by the AuthManager's published properties
+            } catch {
+                await MainActor.run {
+                    isSigningIn = false
+                    handleSignInError(error)
+                }
+            }
+        }
+    }
+    
     private func signInWithGoogle() {
-        isCreatingAccount = true
+        isSocialSigningIn = true
         generalError = nil
         
         Task {
             do {
                 _ = try await authManager.signInWithGoogle()
-                // Navigation will be handled by the AuthManager's published properties
+                
+                // Handle successful sign in
             } catch {
                 await MainActor.run {
-                    isCreatingAccount = false
-                    generalError = "Failed to sign up with Google. Please try again."
+                    isSocialSigningIn = false
+                    generalError = "Failed to sign in with Google. Please try again."
                 }
             }
         }
     }
     
     private func signInWithApple() {
-        isCreatingAccount = true
+        isSocialSigningIn = true
         generalError = nil
         
         Task {
             do {
                 _ = try await authManager.signInWithApple()
-                // Navigation will be handled by the AuthManager's published properties
-            } catch {
-                await MainActor.run {
-                    isCreatingAccount = false
-                    generalError = "Failed to sign up with Apple. Please try again."
-                }
-            }
-        }
-    }
-    
-    private func createAccount() {
-        guard isFormValid else { return }
-        
-        isCreatingAccount = true
-        generalError = nil
-        
-        Task {
-            do {
-                _ = try await authManager.register(
-                    email: email,
-                    password: password,
-                    firstName: firstName,
-                    lastName: lastName
-                )
                 
-                // Navigation will be handled by the AuthManager's published properties
+                // Handle successful sign in
             } catch {
                 await MainActor.run {
-                    isCreatingAccount = false
-                    generalError = error.localizedDescription
-                    
-                    // Show error alert or handle specific errors
-                    handleRegistrationError(error)
+                    isSocialSigningIn = false
+                    generalError = "Failed to sign in with Apple. Please try again."
                 }
             }
         }
     }
     
-    private func handleRegistrationError(_ error: Error) {
+    private func handleSignInError(_ error: Error) {
         // Handle specific Firebase/Auth errors
         if let nsError = error as NSError? {
             switch nsError.code {
-            case 17007: // Email already in use
-                emailError = "This email is already registered"
+            case 17009: // Wrong password
+                passwordError = "Incorrect password"
+            case 17011: // User not found
+                emailError = "No account found with this email"
             case 17008: // Invalid email
                 emailError = "Please enter a valid email address"
-            case 17026: // Weak password
-                passwordError = "Password is too weak"
             default:
-                generalError = "Failed to create account. Please try again."
+                generalError = "Failed to sign in. Please try again."
             }
+        } else {
+            generalError = error.localizedDescription
         }
     }
     
     // MARK: - Validation
-    private func validateFullName() {
-        let result = ValidationUtilities.validateName(fullName, fieldName: "Full name")
-        fullNameError = result.errorMessage
-    }
-    
     private func validateEmail() {
-        let result = ValidationUtilities.validateEmail(email)
-        emailError = result.errorMessage
+        if !email.isEmpty {
+            let result = ValidationUtilities.validateEmail(email)
+            emailError = result.errorMessage
+        } else {
+            emailError = nil
+        }
     }
     
     private func validatePassword() {
-        let result = ValidationUtilities.validatePassword(password)
-        passwordError = result.errorMessage
+        if !password.isEmpty && password.count < 6 {
+            passwordError = "Password must be at least 6 characters"
+        } else {
+            passwordError = nil
+        }
     }
 }
 
 // MARK: - Supporting Views
-struct MindBuddyTextFieldStyle: TextFieldStyle {
-    var showBackground: Bool = true
+struct ForgotPasswordView: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var email = ""
+    @State private var emailError: String?
+    @State private var isLoading = false
+    @State private var showSuccessAlert = false
+    @State private var alertMessage = ""
     
-    func _body(configuration: TextField<Self._Label>) -> some View {
-        configuration
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .foregroundColor(Color.MindBuddy.textPrimary)
-            .background(showBackground ? Color.MindBuddy.cardBackground : Color.clear)
-            .cornerRadius(12)
-            .overlay(
-                showBackground ? 
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.1), lineWidth: 1) : nil
-            )
-    }
-}
-
-struct PasswordStrengthIndicator: View {
-    let strength: PasswordStrength
-    
-    var body: some View {
-        HStack(spacing: 4) {
-            ForEach(0..<3) { index in
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(strengthColor(for: index))
-                    .frame(height: 4)
-            }
-            
-            Text(strength.description)
-                .font(.system(size: 12))
-                .foregroundColor(strengthTextColor)
-        }
-        .animation(.easeInOut(duration: 0.2), value: strength)
-    }
-    
-    private func strengthColor(for index: Int) -> Color {
-        switch strength {
-        case .weak:
-            return index == 0 ? Color.MindBuddy.error : Color.white.opacity(0.1)
-        case .medium:
-            return index <= 1 ? Color.MindBuddy.warning : Color.white.opacity(0.1)
-        case .strong:
-            return Color.MindBuddy.success
-        }
-    }
-    
-    private var strengthTextColor: Color {
-        switch strength {
-        case .weak:
-            return Color.MindBuddy.error
-        case .medium:
-            return Color.MindBuddy.warning
-        case .strong:
-            return Color.MindBuddy.success
-        }
-    }
-}
-
-// MARK: - Placeholder Views
-// SignInView is now in its own file
-
-struct TermsOfServiceView: View {
     var body: some View {
         NavigationStack {
-            ScrollView {
-                Text("Terms of Service content here...")
-                    .padding()
+            ZStack {
+                Color.MindBuddy.background
+                    .ignoresSafeArea()
+                
+                VStack(alignment: .leading, spacing: 24) {
+                    Text("Reset your password")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundColor(Color.MindBuddy.textPrimary)
+                        .padding(.top, 20)
+                    
+                    Text("Enter your email address and we'll send you instructions to reset your password.")
+                        .font(.system(size: 14))
+                        .foregroundColor(Color.MindBuddy.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Email")
+                            .font(.system(size: 14))
+                            .foregroundColor(Color.MindBuddy.textPrimary)
+                        
+                        TextField("Enter your email", text: $email)
+                            .textFieldStyle(MindBuddyTextFieldStyle())
+                            .textContentType(.emailAddress)
+                            .keyboardType(.emailAddress)
+                            .autocapitalization(.none)
+                            .onChange(of: email) { _ in
+                                if !email.isEmpty {
+                                    let result = ValidationUtilities.validateEmail(email)
+                                    emailError = result.errorMessage
+                                }
+                            }
+                        
+                        if let error = emailError {
+                            Text(error)
+                                .font(.system(size: 12))
+                                .foregroundColor(Color.MindBuddy.error)
+                        }
+                    }
+                    
+                    Button(action: resetPassword) {
+                        HStack {
+                            if isLoading {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .scaleEffect(0.8)
+                            } else {
+                                Text("Send Reset Email")
+                                    .font(.system(size: 16, weight: .semibold))
+                            }
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
+                        .background(
+                            !email.isEmpty && emailError == nil ? 
+                            Color.black : 
+                            Color.black.opacity(0.5)
+                        )
+                        .cornerRadius(28)
+                    }
+                    .disabled(email.isEmpty || emailError != nil || isLoading)
+                    
+                    Spacer()
+                }
+                .padding(.horizontal, 24)
             }
-            .navigationTitle("Terms of Service")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        // Dismiss handled by sheet
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
                     }
+                    .foregroundColor(Color.MindBuddy.textPrimary)
                 }
             }
-        }
-    }
-}
-
-struct PrivacyPolicyView: View {
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                Text("Privacy Policy content here...")
-                    .padding()
-            }
-            .navigationTitle("Privacy Policy")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        // Dismiss handled by sheet
+            .alert("Password Reset", isPresented: $showSuccessAlert) {
+                Button("OK") {
+                    if alertMessage.contains("sent") {
+                        dismiss()
                     }
+                }
+            } message: {
+                Text(alertMessage)
+            }
+        }
+        .preferredColorScheme(.dark)
+    }
+    
+    private func resetPassword() {
+        guard !email.isEmpty && emailError == nil else { return }
+        
+        isLoading = true
+        
+        Task {
+            do {
+                try await AuthManager.shared.resetPassword(email: email)
+                
+                await MainActor.run {
+                    isLoading = false
+                    alertMessage = "Password reset email sent! Check your inbox."
+                    showSuccessAlert = true
+                }
+            } catch {
+                await MainActor.run {
+                    isLoading = false
+                    alertMessage = "Failed to send reset email. Please try again."
+                    showSuccessAlert = true
                 }
             }
         }
@@ -626,6 +582,6 @@ struct PrivacyPolicyView: View {
 // MARK: - Preview
 #Preview {
     NavigationStack {
-        CreateAccountView()
+        SignInView()
     }
 }

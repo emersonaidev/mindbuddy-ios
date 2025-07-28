@@ -59,9 +59,7 @@ struct WelcomeView: View {
                 // Buttons at bottom
                 VStack(spacing: 16) {
                     // Get Started Button
-                    NavigationLink(destination: OnboardingHowItWorks(onNext: {
-                        // Navigation is handled within the onboarding flow
-                    })) {
+                    NavigationLink(destination: OnboardingFlowView()) {
                         HStack {
                             Text("Get Started")
                                 .font(.system(size: 16, weight: .semibold))
@@ -78,7 +76,7 @@ struct WelcomeView: View {
                     }
 
                     // Already Have an Account Button
-                    NavigationLink(destination: CreateAccountView()) {
+                    NavigationLink(destination: SignInView()) {
                         Text("I Already Have an Account")
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.white)

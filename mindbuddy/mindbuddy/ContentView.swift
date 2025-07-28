@@ -8,8 +8,19 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var authManager = AuthManager.shared
+    
     var body: some View {
-        WelcomeView()
+        Group {
+            if authManager.isAuthenticated {
+                TemporarySuccessView()
+            } else {
+                NavigationStack {
+                    WelcomeView()
+                }
+            }
+        }
+        .animation(.easeInOut(duration: 0.3), value: authManager.isAuthenticated)
     }
 }
 
