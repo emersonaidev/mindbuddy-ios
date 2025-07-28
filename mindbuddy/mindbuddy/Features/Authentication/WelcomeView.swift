@@ -59,7 +59,9 @@ struct WelcomeView: View {
                 // Buttons at bottom
                 VStack(spacing: 16) {
                     // Get Started Button
-                    NavigationLink(destination: OnboardingHowItWorksView()) {
+                    NavigationLink(destination: OnboardingHowItWorks(onNext: {
+                        // Handle navigation to next onboarding step
+                    })) {
                         HStack {
                             Text("Get Started")
                                 .font(.system(size: 16, weight: .semibold))
