@@ -5,6 +5,7 @@ struct ConnectAppleHealthView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var sizeClass
     @State private var isConnecting = false
+    @State private var showCompletion = false
     
     // Callback for when user taps connect
     var onConnectTapped: () async -> Void
@@ -54,6 +55,18 @@ struct ConnectAppleHealthView: View {
         }
         .ignoresSafeArea()
         .preferredColorScheme(.dark)
+        .navigationDestination(isPresented: $showCompletion) {
+            OnboardingCompletionView(
+                onConnectHealthTapped: {
+                    // User wants to connect again
+                    showCompletion = false
+                },
+                onSkipTapped: {
+                    // Complete onboarding
+                    dismiss()
+                }
+            )
+        }
     }
     
     // MARK: - Background
@@ -147,6 +160,7 @@ struct ConnectAppleHealthView: View {
                     isConnecting = true
                     await onConnectTapped()
                     isConnecting = false
+                    showCompletion = true
                 }
             }) {
                 HStack {

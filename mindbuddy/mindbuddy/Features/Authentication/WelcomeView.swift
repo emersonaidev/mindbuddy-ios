@@ -60,7 +60,7 @@ struct WelcomeView: View {
                 VStack(spacing: 16) {
                     // Get Started Button
                     NavigationLink(destination: OnboardingHowItWorks(onNext: {
-                        // Handle navigation to next onboarding step
+                        // Navigation is handled within the onboarding flow
                     })) {
                         HStack {
                             Text("Get Started")
