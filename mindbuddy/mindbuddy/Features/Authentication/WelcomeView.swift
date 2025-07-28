@@ -78,9 +78,7 @@ struct WelcomeView: View {
                     }
 
                     // Already Have an Account Button
-                    Button(action: {
-                        // Por agora não faz nada
-                    }) {
+                    NavigationLink(destination: CreateAccountView()) {
                         Text("I Already Have an Account")
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.white)
