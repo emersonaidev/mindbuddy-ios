@@ -15,5 +15,9 @@
             </array>
         </dict>
     </array>
+    <key>NSHealthShareUsageDescription</key>
+    <string>MindBuddy needs access to your health data to track your wellness metrics and calculate your rewards based on your stress levels and activity.</string>
+    <key>NSHealthUpdateUsageDescription</key>
+    <string>MindBuddy needs permission to save mindfulness sessions to your Health app.</string>
 </dict>
 </plist>
