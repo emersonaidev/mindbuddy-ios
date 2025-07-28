@@ -3,6 +3,7 @@ import HealthKit
 
 struct ConnectAppleHealthView: View {
     let onNext: () -> Void
+    let onBack: () -> Void
     
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var sizeClass
@@ -36,20 +37,36 @@ struct ConnectAppleHealthView: View {
                 ScrollView {
                     VStack(spacing: 16) {
                         healthDataAccessCard
-                        privacyControlCard  
+                            .opacity(animateContent ? 1 : 0)
+                            .offset(y: animateContent ? 0 : 20)
+                            .animation(
+                                .spring(response: 0.6, dampingFraction: 0.8)
+                                .delay(0.0),
+                                value: animateContent
+                            )
+                        
+                        privacyControlCard
+                            .opacity(animateContent ? 1 : 0)
+                            .offset(y: animateContent ? 0 : 20)
+                            .animation(
+                                .spring(response: 0.6, dampingFraction: 0.8)
+                                .delay(0.1),
+                                value: animateContent
+                            )
+                        
                         appleHealthCard
+                            .opacity(animateContent ? 1 : 0)
+                            .offset(y: animateContent ? 0 : 20)
+                            .animation(
+                                .spring(response: 0.6, dampingFraction: 0.8)
+                                .delay(0.2),
+                                value: animateContent
+                            )
                     }
                     .padding(.horizontal, horizontalPadding)
                     .padding(.vertical, 20)
                     .frame(maxWidth: maxContentWidth)
                 }
-                .opacity(animateContent ? 1 : 0)
-                .offset(y: animateContent ? 0 : 20)
-                .animation(
-                    .spring(response: 0.5, dampingFraction: 0.8)
-                    .delay(0.1),
-                    value: animateContent
-                )
                 
                 Spacer()
                 
@@ -101,7 +118,7 @@ struct ConnectAppleHealthView: View {
     private var headerSection: some View {
         VStack(spacing: 16) {
             HStack {
-                Button(action: { dismiss() }) {
+                Button(action: { onBack() }) {
                     HStack(spacing: 4) {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 14, weight: .medium))
@@ -122,12 +139,6 @@ struct ConnectAppleHealthView: View {
                 .foregroundColor(Color.MindBuddy.textPrimary)
                 .multilineTextAlignment(.center)
                 .accessibilityAddTraits(.isHeader)
-                .opacity(animateContent ? 1 : 0)
-                .offset(y: animateContent ? 0 : 20)
-                .animation(
-                    .spring(response: 0.5, dampingFraction: 0.8),
-                    value: animateContent
-                )
         }
     }
     
@@ -189,8 +200,8 @@ struct ConnectAppleHealthView: View {
             .opacity(animateContent ? 1 : 0)
             .offset(y: animateContent ? 0 : 20)
             .animation(
-                .spring(response: 0.5, dampingFraction: 0.8)
-                .delay(0.4),
+                .spring(response: 0.6, dampingFraction: 0.8)
+                .delay(0.3),
                 value: animateContent
             )
             
@@ -201,8 +212,8 @@ struct ConnectAppleHealthView: View {
                 .accessibilityLabel("You can customize what you share in the next step")
                 .opacity(animateContent ? 1 : 0)
                 .animation(
-                    .spring(response: 0.5, dampingFraction: 0.8)
-                    .delay(0.5),
+                    .spring(response: 0.6, dampingFraction: 0.8)
+                    .delay(0.4),
                     value: animateContent
                 )
         }
@@ -318,6 +329,9 @@ struct ConnectAppleHealthView_Previews: PreviewProvider {
             ConnectAppleHealthView(
                 onNext: {
                     // Preview action
+                },
+                onBack: {
+                    // Preview back action
                 }
             )
             .previewDisplayName("iPhone 15 Pro")
@@ -325,6 +339,9 @@ struct ConnectAppleHealthView_Previews: PreviewProvider {
             ConnectAppleHealthView(
                 onNext: {
                     // Preview action
+                },
+                onBack: {
+                    // Preview back action
                 }
             )
             .previewDevice("iPhone SE (3rd generation)")

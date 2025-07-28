@@ -27,11 +27,18 @@ struct OnboardingFlowView: View {
                 .zIndex(currentStep == 0 ? 1 : 0)
                 
             case 1:
-                ConnectAppleHealthView(onNext: {
-                    withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-                        currentStep = 2
+                ConnectAppleHealthView(
+                    onNext: {
+                        withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                            currentStep = 2
+                        }
+                    },
+                    onBack: {
+                        withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                            currentStep = 0
+                        }
                     }
-                })
+                )
                 .transition(.asymmetric(
                     insertion: .move(edge: .trailing)
                         .combined(with: .opacity)

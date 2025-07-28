@@ -1,4 +1,5 @@
 import SwiftUI
+import AuthenticationServices
 
 struct CreateAccountView: View {
     @StateObject private var authManager = AuthManager.shared
@@ -162,23 +163,15 @@ struct CreateAccountView: View {
     
     private var socialLoginSection: some View {
         VStack(spacing: 16) {
-            // Google Sign In
+            // Google Sign In Button
             Button(action: signInWithGoogle) {
                 HStack(spacing: 12) {
-                    // Google Icon - Replace with actual Google logo from Assets
-                    ZStack {
-                        Circle()
-                            .fill(Color.white)
-                            .frame(width: 24, height: 24)
-                        
-                        Text("G")
-                            .font(.system(size: 16, weight: .bold, design: .rounded))
-                            .foregroundColor(Color(red: 0.26, green: 0.52, blue: 0.96))
-                    }
-                    .accessibilityHidden(true)
+                    Image("google-logo") // Add Google logo to Assets
+                        .resizable()
+                        .frame(width: 20, height: 20)
                     
                     Text("Continue with Google")
-                        .font(.system(size: 15, weight: .medium))
+                        .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.black)
                 }
                 .frame(maxWidth: .infinity)
@@ -188,27 +181,17 @@ struct CreateAccountView: View {
                 .mindBuddyCardShadow()
             }
             .disabled(isCreatingAccount)
-            .accessibilityLabel("Sign up with Google")
             
-            // Apple Sign In
-            Button(action: signInWithApple) {
-                HStack(spacing: 8) {
-                    Image(systemName: "apple.logo")
-                        .font(.system(size: 20))
-                        .foregroundColor(.white)
-                    
-                    Text("Continue with Apple")
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(.white)
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: 56)
-                .background(Color(red: 0.10, green: 0.10, blue: 0.10))
-                .cornerRadius(28)
-                .mindBuddyCardShadow()
+            // Apple Sign In - Official Button
+            SignInWithAppleButton(.continue) { request in
+                request.requestedScopes = [.fullName, .email]
+            } onCompletion: { result in
+                handleSignInWithAppleResult(result)
             }
+            .signInWithAppleButtonStyle(.white)
+            .frame(height: 56)
+            .cornerRadius(28)
             .disabled(isCreatingAccount)
-            .accessibilityLabel("Sign up with Apple")
         }
     }
     
@@ -456,6 +439,17 @@ struct CreateAccountView: View {
                     generalError = "Failed to sign up with Apple. Please try again."
                 }
             }
+        }
+    }
+    
+    private func handleSignInWithAppleResult(_ result: Result<ASAuthorization, Error>) {
+        switch result {
+        case .success(_):
+            // The actual sign in is handled by the authManager
+            signInWithApple()
+        case .failure(let error):
+            generalError = "Failed to sign up with Apple: \(error.localizedDescription)"
+            isCreatingAccount = false
         }
     }
     
